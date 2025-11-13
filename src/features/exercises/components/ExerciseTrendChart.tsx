@@ -131,7 +131,10 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
   const [isPreparingShare, setIsPreparingShare] = useState(false);
   const userName = useMemo(() => user?.displayName?.trim() || "Atleta New PR", [user?.displayName]);
 
-  const renderTrendChart = () => (
+  const renderTrendChart = ({ animate = true }: { animate?: boolean } = {}) => {
+    const shouldAnimate = animate && !isPreparingShare;
+
+    return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={exercise.trendSeries}>
         <defs>
@@ -183,10 +186,13 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
           strokeWidth={2}
           fill="url(#exerciseWeightGradient)"
           activeDot={{ r: 5, fill: "#35D0FF" }}
+          isAnimationActive={shouldAnimate}
+          animationDuration={shouldAnimate ? 800 : 0}
         />
       </AreaChart>
     </ResponsiveContainer>
   );
+  };
 
   const handleShareChart = useCallback(async () => {
     if (!chartRef.current) {
@@ -199,6 +205,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
 
       const node = chartRef.current;
       await new Promise((resolve) => requestAnimationFrame(resolve));
+      await new Promise((resolve) => setTimeout(resolve, 250));
 
       const dataUrl = await toPng(node, {
         cacheBust: true,
@@ -304,7 +311,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
                 <span className="font-semibold text-white">{exercise.name}</span>.
               </p>
               <div className="mt-4 flex-1">
-                <div className="h-full w-full">{renderTrendChart()}</div>
+                <div className="h-full w-full">{renderTrendChart({ animate: false })}</div>
               </div>
               <p className="mt-6 text-center text-xs font-semibold uppercase tracking-wide text-white/60">
                 Use o New PR para ter os seus recordes pessoais na palma da sua mão
