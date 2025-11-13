@@ -2,6 +2,7 @@ import { PeriodizationSummaryCard } from "../../features/dashboard/components/Pe
 import { QuickStatsGrid } from "../../features/dashboard/components/QuickStatsGrid";
 import { VolumeTrendCard } from "../../features/dashboard/components/VolumeTrendCard";
 import { useDashboardData } from "../../features/dashboard/hooks/useDashboardData";
+import letreiroImg from "../../assets/letreiro.png";
 
 export function HomePage() {
   const { data, loading } = useDashboardData();
@@ -16,9 +17,13 @@ export function HomePage() {
 
   return (
     <section className="space-y-6">
-      <header className="space-y-1">
+      <header className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <img 
+          src={letreiroImg} 
+          alt="New PR" 
+          className="h-10 w-auto object-contain"
+        />
         <p className="text-sm text-text-muted">Acompanhe sua evolução</p>
-        <h1 className="text-3xl font-semibold text-white">New PR</h1>
       </header>
 
       <PeriodizationSummaryCard periodization={data.periodization} />

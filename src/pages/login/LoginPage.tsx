@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { Location } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import logoImg from "../../assets/logo.png";
+import letreiroImg from "../../assets/letreiro.png";
 
 export function LoginPage() {
   const { user, loading, signInWithGoogle, signInAsGuest } = useAuth();
@@ -53,9 +55,17 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-center text-text">
-      <div>
-        <p className="text-sm text-text-muted">Bem-vindo ao</p>
-        <h1 className="text-4xl font-semibold">New PR</h1>
+      <div className="flex flex-col items-center gap-4">
+        <img 
+          src={logoImg} 
+          alt="New PR Logo" 
+          className="h-32 w-32 object-contain"
+        />
+        <img 
+          src={letreiroImg} 
+          alt="New PR" 
+          className="h-12 w-auto object-contain"
+        />
       </div>
       <p className="max-w-xs text-sm text-text-muted">
         Entre com sua conta Google para registrar, analisar e acelerar seus PRs.
