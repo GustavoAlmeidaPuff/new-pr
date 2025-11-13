@@ -28,8 +28,6 @@ export function useDashboardData() {
         { label: "Sem 6", volume: 1700 },
       ],
       quickStats: [
-        { label: "Treinos esta semana", value: "4" },
-        { label: "Exercícios total", value: "23" },
         { label: "PRs este mês", value: "12" },
         { label: "Volume médio (kg)", value: "1.520" },
       ],
