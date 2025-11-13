@@ -1,8 +1,22 @@
 /**
  * Formata o peso adicionando "cada lado" quando o exercício é unilateral
  */
-export function formatWeight(weight: number, weightType?: "total" | "per-side"): string {
+type FormatWeightOptions = {
+  includeSideLabel?: boolean;
+};
+
+export function formatWeight(
+  weight: number,
+  weightType?: "total" | "per-side",
+  options?: FormatWeightOptions,
+): string {
+  const { includeSideLabel = true } = options ?? {};
   const formattedWeight = `${weight} kg`;
-  return weightType === "per-side" ? `${formattedWeight} cada lado` : formattedWeight;
+
+  if (weightType === "per-side" && includeSideLabel) {
+    return `${formattedWeight} cada lado`;
+  }
+
+  return formattedWeight;
 }
 

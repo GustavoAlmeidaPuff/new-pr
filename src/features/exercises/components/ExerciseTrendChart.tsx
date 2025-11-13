@@ -96,7 +96,9 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
               dy={8}
             />
             <YAxis
-              tickFormatter={(value) => formatWeight(Number(value), exercise.weightType)}
+              tickFormatter={(value) =>
+                formatWeight(Number(value), exercise.weightType, { includeSideLabel: false })
+              }
               tickLine={false}
               axisLine={false}
               tick={{ fill: "#9FB5CA", fontSize: 12 }}
