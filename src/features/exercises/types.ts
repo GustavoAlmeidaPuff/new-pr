@@ -28,6 +28,7 @@ export interface ExerciseSummary {
     date: string;
     weight: number;
     reps: number;
+    volume: number;
   }>;
   history: ExercisePR[];
 }

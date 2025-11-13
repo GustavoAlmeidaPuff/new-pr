@@ -64,6 +64,7 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
             date: pr.date,
             weight: pr.weight,
             reps: pr.reps,
+            volume: pr.volume,
           }));
 
         // Gera insights
