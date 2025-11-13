@@ -2,8 +2,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   type TooltipProps,
@@ -120,11 +118,11 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
       <div className="space-y-8">
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={exercise.trendSeries}>
+            <AreaChart data={exercise.trendSeries}>
               <defs>
                 <linearGradient id="exerciseWeightGradient" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#09C3F7" stopOpacity={0.85} />
-                  <stop offset="100%" stopColor="#09C3F7" stopOpacity={0.05} />
+                  <stop offset="0%" stopColor="#35D0FF" stopOpacity={0.65} />
+                  <stop offset="100%" stopColor="#35D0FF" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
 
@@ -158,15 +156,15 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
                   />
                 )}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="weight"
-                stroke="#09C3F7"
-                strokeWidth={3}
-                dot={{ r: 4, fill: "#09C3F7", strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: "#09C3F7" }}
+                stroke="#35D0FF"
+                strokeWidth={2}
+                fill="url(#exerciseWeightGradient)"
+                activeDot={{ r: 5, fill: "#35D0FF" }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
         <section className="space-y-3">
