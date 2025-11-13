@@ -1,11 +1,12 @@
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { Skeleton } from "../../components/loading";
 import { AddExerciseToWorkoutModal } from "../../components/modals/AddExerciseToWorkoutModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { WorkoutExerciseCard } from "../../features/workouts/components/WorkoutExerciseCard";
+import { WorkoutSearchInput } from "../../features/workouts/components/WorkoutSearchInput";
 import { useWorkoutDetailData } from "../../features/workouts/hooks/useWorkoutDetailData";
 import { getWorkoutById, type WorkoutRecord } from "../../services/workouts.service";
 
@@ -16,6 +17,7 @@ export function WorkoutDetailPage() {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Treino");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (!workoutId || !user) return;
@@ -38,6 +40,23 @@ export function WorkoutDetailPage() {
   const handleAddExercise = () => {
     setIsAddModalOpen(true);
   };
+
+  const filteredExercises = useMemo(() => {
+    const normalizedTerm = searchTerm.trim().toLowerCase();
+
+    if (normalizedTerm.length === 0) {
+      return exercises;
+    }
+
+    return exercises.filter((exercise) => {
+      const nameMatch = exercise.name.toLowerCase().includes(normalizedTerm);
+      const muscleGroupMatch = exercise.muscleGroup
+        ? exercise.muscleGroup.toLowerCase().includes(normalizedTerm)
+        : false;
+
+      return nameMatch || muscleGroupMatch;
+    });
+  }, [exercises, searchTerm]);
 
   if (loading) {
     return (
@@ -99,10 +118,20 @@ export function WorkoutDetailPage() {
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {exercises.map((exercise) => (
-              <WorkoutExerciseCard key={exercise.id} exercise={exercise} />
-            ))}
+          <div className="space-y-4">
+            <WorkoutSearchInput value={searchTerm} onChange={setSearchTerm} />
+
+            {filteredExercises.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-border bg-background-card/40 p-6 text-center text-sm text-text-muted">
+                Nenhum exercício encontrado para &ldquo;{searchTerm}&rdquo;.
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {filteredExercises.map((exercise) => (
+                  <WorkoutExerciseCard key={exercise.id} exercise={exercise} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
