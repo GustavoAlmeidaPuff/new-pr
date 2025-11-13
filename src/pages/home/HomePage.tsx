@@ -1,7 +1,6 @@
 import { Skeleton } from "../../components/loading";
 import letreiroImg from "../../assets/letreiro.png";
 import { PeriodizationSummaryCard } from "../../features/dashboard/components/PeriodizationSummaryCard";
-import { QuickStatsGrid } from "../../features/dashboard/components/QuickStatsGrid";
 import { VolumeTrendCard } from "../../features/dashboard/components/VolumeTrendCard";
 import { WeeklyStreakCard } from "../../features/dashboard/components/WeeklyStreakCard";
 import { PRHistoryTimeline } from "../../features/dashboard/components/PRHistoryTimeline";
@@ -23,11 +22,6 @@ export function HomePage() {
           <Skeleton className="h-56 rounded-3xl" />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-36 rounded-3xl" />
-          ))}
-        </div>
       </section>
     );
   }
@@ -48,8 +42,6 @@ export function HomePage() {
       <VolumeTrendCard data={data.volumeSeries} />
 
       <WeeklyStreakCard streak={data.weeklyStreak} />
-
-      <QuickStatsGrid stats={data.quickStats} />
 
       <PRHistoryTimeline items={data.prHistory} />
     </section>

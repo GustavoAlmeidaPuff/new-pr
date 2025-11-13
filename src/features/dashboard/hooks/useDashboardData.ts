@@ -18,7 +18,6 @@ export function useDashboardData() {
     periodization: null,
     volumeSeries: [],
     weeklyStreak: null,
-    quickStats: [],
     prHistory: [],
   });
   const [loading, setLoading] = useState(true);
@@ -42,7 +41,6 @@ export function useDashboardData() {
             periodization: null,
             volumeSeries: [],
             weeklyStreak: null,
-            quickStats: [],
             prHistory: [],
           });
           setLoading(false);
@@ -137,15 +135,6 @@ export function useDashboardData() {
           : 0;
 
         // Calcula volume médio
-        const prsThisMonth = normalizedPrs.filter((pr) => {
-          const prDate = new Date(pr.date);
-          return prDate.getMonth() === now.getMonth() && prDate.getFullYear() === now.getFullYear();
-        }).length;
-
-        const totalVolume = normalizedPrs.reduce((sum, pr) => sum + pr.volume, 0);
-        const avgVolume = normalizedPrs.length > 0
-          ? Math.round(totalVolume / normalizedPrs.length)
-          : 0;
         // Calcula streaks
         let longestPrStreak = 0;
         let rollingStreak = 0;
@@ -245,11 +234,6 @@ export function useDashboardData() {
           },
           volumeSeries,
           weeklyStreak,
-          quickStats: [
-            { label: "PRs este mês", value: prsThisMonth.toString() },
-            { label: "Volume médio (kg)", value: avgVolume.toLocaleString("pt-BR") },
-            { label: "Streak de PRs", value: `${currentPrStreak} sem.` },
-          ],
           prHistory,
         });
 

@@ -1,7 +1,6 @@
 export type {
   DashboardPeriodization,
   DashboardVolumePoint,
-  DashboardQuickStat,
   DashboardSummary,
   DashboardWeeklySnapshot,
   DashboardWeeklyStreak,

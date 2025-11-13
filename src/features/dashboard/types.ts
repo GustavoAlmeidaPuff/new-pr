@@ -19,12 +19,6 @@ export interface DashboardVolumePoint {
   weekEnd: string;
 }
 
-export interface DashboardQuickStat {
-  label: string;
-  value: string;
-  hint?: string;
-}
-
 export interface DashboardWeeklySnapshot {
   index: number;
   label: string;
@@ -56,6 +50,5 @@ export interface DashboardSummary {
   periodization: DashboardPeriodization | null;
   volumeSeries: DashboardVolumePoint[];
   weeklyStreak: DashboardWeeklyStreak | null;
-  quickStats: DashboardQuickStat[];
   prHistory: DashboardPRHistoryItem[];
 }
