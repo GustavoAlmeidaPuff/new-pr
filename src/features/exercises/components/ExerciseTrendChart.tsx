@@ -1,3 +1,6 @@
+import { useCallback, useRef, useState } from "react";
+
+import { Share2 } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -8,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { toPng } from "html-to-image";
 
 import type { ExerciseSummary } from "..";
 import { formatWeight } from "../utils/formatWeight";
@@ -120,14 +124,98 @@ function ExerciseVolumeTooltip({ active, payload, label }: ExerciseVolumeTooltip
 }
 
 export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const handleShareChart = useCallback(async () => {
+    if (!chartRef.current) {
+      return;
+    }
+
+    try {
+      setIsSharing(true);
+
+      const node = chartRef.current;
+      const dataUrl = await toPng(node, {
+        cacheBust: true,
+        pixelRatio: window.devicePixelRatio || 1,
+        filter: (domNode) => {
+          if (!(domNode instanceof HTMLElement)) {
+            return true;
+          }
+
+          return domNode.dataset.shareExclude !== "true";
+        },
+      });
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const sanitizedName = exercise.name.toLowerCase().replace(/\s+/g, "-");
+      const fileName = `evolucao-${sanitizedName || "exercicio"}.png`;
+      const file = new File([blob], fileName, { type: blob.type || "image/png" });
+
+      const navigatorWithShare = navigator as Navigator & {
+        canShare?: (data?: ShareData) => boolean;
+      };
+
+      if (
+        navigatorWithShare.share &&
+        navigatorWithShare.canShare &&
+        navigatorWithShare.canShare({ files: [file] })
+      ) {
+        await navigatorWithShare.share({
+          title: `Evolução de carga - ${exercise.name}`,
+          text: `Veja minha evolução no ${exercise.name}!`,
+          files: [file],
+        });
+        return;
+      }
+
+      if (navigatorWithShare.share) {
+        await navigatorWithShare.share({
+          title: `Evolução de carga - ${exercise.name}`,
+          text: `Veja minha evolução no ${exercise.name}!`,
+          url: dataUrl,
+        });
+        return;
+      }
+
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = fileName;
+      link.rel = "noopener";
+      link.target = "_blank";
+      document.body.append(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Não foi possível compartilhar o gráfico.", error);
+    } finally {
+      setIsSharing(false);
+    }
+  }, [exercise.name]);
+
   return (
     <div className="space-y-5">
       <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
-        <header>
-          <p className="text-xs font-medium uppercase tracking-wide text-metric-load">Evolução de carga</p>
-          <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-metric-load">Evolução de carga</p>
+            <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={handleShareChart}
+            disabled={isSharing}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Compartilhar gráfico de evolução"
+            title="Compartilhar gráfico"
+            data-share-exclude="true"
+          >
+            <Share2 className="h-5 w-5" aria-hidden />
+          </button>
         </header>
-        <div className="h-64 w-full">
+        <div ref={chartRef} className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={exercise.trendSeries}>
               <defs>
