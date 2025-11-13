@@ -5,7 +5,7 @@ import type { Location } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth();
+  const { user, loading, signInWithGoogle, signInAsGuest } = useAuth();
   const [authenticating, setAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
@@ -39,6 +39,18 @@ export function LoginPage() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      setError(null);
+      setAuthenticating(true);
+      await signInAsGuest();
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível entrar como convidado. Tente novamente.");
+      setAuthenticating(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-center text-text">
       <div>
@@ -60,6 +72,14 @@ export function LoginPage() {
         className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-card transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {authenticating || loading ? "Conectando..." : "Entrar com Google"}
+      </button>
+      <button
+        type="button"
+        onClick={handleGuestLogin}
+        disabled={authenticating || loading}
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full border border-text-muted/20 bg-background px-6 py-3 text-sm font-semibold text-text shadow-card transition hover:bg-text-muted/10 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {authenticating || loading ? "Conectando..." : "Entrar como Convidado"}
       </button>
     </div>
   );
