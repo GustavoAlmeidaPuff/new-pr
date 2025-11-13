@@ -17,7 +17,9 @@ type UseWorkoutsDataReturn = {
 export function useWorkoutsData(): UseWorkoutsDataReturn {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
+  const [searchResults, setSearchResults] = useState<
+    Array<{ id: string; name: string; muscleGroup: string; weightType?: "total" | "per-side" }>
+  >([]);
   const [isSearching, setIsSearching] = useState(false);
 
   // Memoiza os constraints para evitar recriar a subscription
@@ -30,9 +32,19 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
     orderByDirection: "asc",
   });
 
+  const { data: workoutExercises, loading: workoutExercisesLoading } = useFirestoreCollection<{
+    id: string;
+    workoutId: string;
+    exerciseId: string;
+  }>({
+    path: user ? `users/${user.uid}/workoutExercises` : "users/__placeholder__/workoutExercises",
+    orderByField: "createdAt",
+    orderByDirection: "asc",
+  });
+
   useEffect(() => {
     if (!searchTerm.trim() || !user) {
-      setExercises([]);
+      setSearchResults([]);
       return;
     }
 
@@ -40,17 +52,10 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
       setIsSearching(true);
       try {
         const results = await searchExercisesByName(user.uid, searchTerm);
-        setExercises(
-          results.map((ex) => ({
-            id: ex.id,
-            name: ex.name,
-            muscleGroup: ex.muscleGroup,
-            weightType: ex.weightType,
-          }))
-        );
+        setSearchResults(results);
       } catch (error) {
         console.error("Erro ao buscar exercícios:", error);
-        setExercises([]);
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
       }
@@ -60,13 +65,36 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
     return () => clearTimeout(timeoutId);
   }, [searchTerm, user]);
 
+  const exercises = useMemo<WorkoutExercisePreview[]>(() => {
+    if (!user) {
+      return [];
+    }
+
+    const workoutsById = new Map(workouts.map((workout) => [workout.id, workout.name]));
+    const workoutsByExercise = workoutExercises.reduce<Map<string, string[]>>((acc, item) => {
+      if (!acc.has(item.exerciseId)) {
+        acc.set(item.exerciseId, []);
+      }
+      const workoutName = workoutsById.get(item.workoutId);
+      if (workoutName) {
+        acc.get(item.exerciseId)?.push(workoutName);
+      }
+      return acc;
+    }, new Map());
+
+    return searchResults.map((exercise) => ({
+      ...exercise,
+      workoutNames: workoutsByExercise.get(exercise.id) ?? [],
+    }));
+  }, [user, workouts, workoutExercises, searchResults]);
+
   return {
     workouts: user ? workouts : [],
     exercises,
     searchTerm,
     setSearchTerm,
     isSearching,
-    loading: user ? workoutsLoading : false,
+    loading: user ? workoutsLoading || workoutExercisesLoading : false,
   };
 }
 

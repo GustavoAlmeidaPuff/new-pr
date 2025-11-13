@@ -24,8 +24,10 @@ export interface ExerciseSummary {
   };
   insights: string[];
   trendSeries: Array<{
+    id: string;
     date: string;
     weight: number;
+    reps: number;
   }>;
   history: ExercisePR[];
 }

@@ -60,8 +60,10 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
           .slice(0, 6)
           .reverse()
           .map((pr) => ({
+            id: pr.id,
             date: pr.date,
             weight: pr.weight,
+            reps: pr.reps,
           }));
 
         // Gera insights

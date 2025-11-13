@@ -58,6 +58,13 @@ export function ExerciseSearchResults({ results, isLoading = false }: ExerciseSe
               <div className="flex flex-col">
                 <span className="font-medium">{exercise.name}</span>
                 <span className="text-xs text-text-muted">{exercise.muscleGroup}</span>
+                {exercise.workoutNames && exercise.workoutNames.length > 0 && (
+                  <span className="text-xs text-text-muted">
+                    {exercise.workoutNames.length === 1
+                      ? exercise.workoutNames[0]
+                      : exercise.workoutNames.join(" · ")}
+                  </span>
+                )}
               </div>
               {exercise.lastPr && (
                 <div className="flex items-center gap-2 text-xs">
