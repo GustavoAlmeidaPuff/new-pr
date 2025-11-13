@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função auxiliar para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função auxiliar para verificar se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Regras para coleção de usuários
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Subcoleção de periodizações
+      match /periodizations/{periodizationId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Subcoleção de treinos
+      match /workouts/{workoutId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Subcoleção de exercícios
+      match /exercises/{exerciseId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Subcoleção de PRs
+      match /prs/{prId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Subcoleção de relação treinos-exercícios
+      match /workoutExercises/{workoutExerciseId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
+

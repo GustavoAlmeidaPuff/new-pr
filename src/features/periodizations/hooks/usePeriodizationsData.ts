@@ -1,48 +1,29 @@
-import { useMemo } from "react";
-
+import { useAuth } from "../../../contexts/AuthContext";
+import { useFirestoreCollection } from "../../../hooks/useFirestoreCollection";
+import { calculatePeriodizationProgress } from "../../../services/periodizations.service";
 import type { Periodization } from "..";
 
 export function usePeriodizationsData() {
-  // TODO: substituir dados mock por integração real com Firestore.
-  const periodizations = useMemo<Periodization[]>(
-    () => [
-      {
-        id: "base-2024",
-        name: "Base",
-        status: "active",
-        startDate: "2024-11-25",
-        durationDays: 12,
-        prs: 8,
-        progressPercent: 20,
-      },
-      {
-        id: "hipertrofia-2024",
-        name: "Hipertrofia",
-        status: "completed",
-        startDate: "2024-10-01",
-        durationDays: 56,
-        completedAt: "2024-11-24",
-        prs: 15,
-        progressPercent: 100,
-      },
-      {
-        id: "deload-2024",
-        name: "Deload",
-        status: "completed",
-        startDate: "2024-08-20",
-        durationDays: 14,
-        completedAt: "2024-09-03",
-        prs: 6,
-        progressPercent: 100,
-      },
-    ],
-    [],
-  );
+  const { user } = useAuth();
+
+  const { data, loading, error } = useFirestoreCollection<Periodization>({
+    path: user ? `users/${user.uid}/periodizations` : "periodizations",
+    constraints: [],
+    orderByField: "createdAt",
+    orderByDirection: "desc",
+    map: (periodization) => ({
+      ...periodization,
+      progressPercent: calculatePeriodizationProgress(
+        periodization.startDate,
+        periodization.durationDays
+      ),
+    }),
+  });
 
   return {
-    periodizations,
-    loading: false,
-    error: null as Error | null,
+    periodizations: user ? data : [],
+    loading,
+    error,
   };
 }
 

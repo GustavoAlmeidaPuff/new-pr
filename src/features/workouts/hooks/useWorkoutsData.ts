@@ -1,5 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
+import { useAuth } from "../../../contexts/AuthContext";
+import { useFirestoreCollection } from "../../../hooks/useFirestoreCollection";
+import { searchExercisesByName } from "../../../services/exercises.service";
 import type { Workout, WorkoutExercisePreview } from "..";
 
 type UseWorkoutsDataReturn = {
@@ -7,58 +10,57 @@ type UseWorkoutsDataReturn = {
   exercises: WorkoutExercisePreview[];
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  isSearching: boolean;
 };
 
-const workoutsSeed: Workout[] = [
-  { id: "treino-a", name: "Treino A", description: "Upper Body", exerciseCount: 8 },
-  { id: "treino-b", name: "Treino B", description: "Lower Body", exerciseCount: 7 },
-  { id: "treino-c", name: "Treino C", description: "Push", exerciseCount: 6 },
-  { id: "treino-d", name: "Treino D", description: "Pull", exerciseCount: 7 },
-];
-
-const exercisesSeed: WorkoutExercisePreview[] = [
-  {
-    id: "supino-reto",
-    name: "Supino Reto",
-    muscleGroup: "Peito",
-    lastPr: { weight: 22, reps: 6, date: "2024-12-06", trend: "up" },
-  },
-  {
-    id: "agachamento",
-    name: "Agachamento Livre",
-    muscleGroup: "Pernas",
-    lastPr: { weight: 70, reps: 5, date: "2024-12-03", trend: "up" },
-  },
-  {
-    id: "terra",
-    name: "Levantamento Terra",
-    muscleGroup: "Costas",
-    lastPr: { weight: 90, reps: 3, date: "2024-11-30", trend: "steady" },
-  },
-  {
-    id: "desenvolvimento",
-    name: "Desenvolvimento",
-    muscleGroup: "Ombros",
-    lastPr: { weight: 18, reps: 8, date: "2024-11-29", trend: "down" },
-  },
-];
-
 export function useWorkoutsData(): UseWorkoutsDataReturn {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const filteredExercises = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return [];
+  const { data: workouts, loading } = useFirestoreCollection<Workout>({
+    path: user ? `users/${user.uid}/workouts` : "workouts",
+    constraints: [],
+    orderByField: "createdAt",
+    orderByDirection: "desc",
+  });
+
+  useEffect(() => {
+    if (!searchTerm.trim() || !user) {
+      setExercises([]);
+      return;
     }
-    const normalized = searchTerm.trim().toLowerCase();
-    return exercisesSeed.filter((exercise) => exercise.name.toLowerCase().includes(normalized));
-  }, [searchTerm]);
+
+    const searchExercises = async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchExercisesByName(user.uid, searchTerm);
+        setExercises(
+          results.map((ex) => ({
+            id: ex.id,
+            name: ex.name,
+            muscleGroup: ex.muscleGroup,
+          }))
+        );
+      } catch (error) {
+        console.error("Erro ao buscar exercícios:", error);
+        setExercises([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchExercises, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, user]);
 
   return {
-    workouts: workoutsSeed,
-    exercises: filteredExercises,
+    workouts: user ? workouts : [],
+    exercises,
     searchTerm,
     setSearchTerm,
+    isSearching,
   };
 }
 

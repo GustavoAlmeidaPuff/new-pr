@@ -1,73 +1,182 @@
-# React + TypeScript + Vite
+# New PR 💪
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**New PR** é um aplicativo web mobile-first voltado para registro e acompanhamento de **Personal Records (PRs)** em exercícios físicos. O app permite o monitoramento da evolução ao longo do tempo, oferecendo gráficos de progresso por exercício e gestão inteligente de periodizações de treino.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** + **TypeScript**
+- **Vite** (Build tool)
+- **Firebase** (Authentication + Firestore Database)
+- **Tailwind CSS** (Estilização)
+- **Recharts** (Gráficos)
+- **React Router** (Navegação)
+- **Lucide React** (Ícones)
 
-## React Compiler
+## 📋 Funcionalidades
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### ✅ Implementadas
 
-## Expanding the ESLint configuration
+- 🔐 **Autenticação Firebase** (Google + Conta Convidado)
+- 📊 **Dashboard** com resumo de periodização ativa e gráficos de volume
+- 🏋️ **Gestão de Periodizações** (Base, Shock, Deload, etc.)
+  - Criar nova periodização
+  - Ativar/desativar periodizações
+  - Visualizar histórico
+- 💪 **Gestão de Treinos**
+  - Criar treinos personalizados
+  - Adicionar exercícios aos treinos
+  - Visualizar lista de treinos
+- 🎯 **Gestão de Exercícios**
+  - Criar exercícios customizados
+  - Buscar exercícios por nome
+  - Visualizar detalhes e histórico
+- 📈 **Registro de PRs**
+  - Registrar peso, repetições e data
+  - Cálculo automático de volume
+  - Histórico completo de PRs
+  - Gráficos de evolução
+  - Insights automáticos baseados em desempenho
+- 🔄 **Sincronização em tempo real** com Firestore
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🔮 Próximas Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Exportação de dados históricos
+- Modo offline com sincronização posterior
+- Comparativos entre periodizações
+- Metas e notificações de progresso
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ Setup do Projeto
+
+### Pré-requisitos
+
+- Node.js 18+ e npm
+- Conta no Firebase (com projeto configurado)
+
+### Instalação
+
+1. Clone o repositório:
+```bash
+git clone <repository-url>
+cd "new pr"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Instale as dependências:
+```bash
+npm install
 ```
+
+3. Configure as variáveis de ambiente:
+
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```env
+VITE_FIREBASE_API_KEY=sua_api_key
+VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=seu_projeto_id
+VITE_FIREBASE_STORAGE_BUCKET=seu_projeto.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=seu_sender_id
+VITE_FIREBASE_APP_ID=seu_app_id
+VITE_FIREBASE_MEASUREMENT_ID=seu_measurement_id
+```
+
+4. Execute o projeto em desenvolvimento:
+```bash
+npm run dev
+```
+
+5. Acesse `http://localhost:5173`
+
+### Build para Produção
+
+```bash
+npm run build
+```
+
+Os arquivos otimizados estarão em `dist/`.
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── components/         # Componentes reutilizáveis
+│   ├── layout/        # Layout e navegação
+│   └── modals/        # Modais de criação/edição
+├── config/            # Configuração do Firebase
+├── contexts/          # Contextos React (Auth)
+├── features/          # Features organizadas por domínio
+│   ├── dashboard/     # Dashboard e estatísticas
+│   ├── exercises/     # Gestão de exercícios
+│   ├── periodizations/# Gestão de periodizações
+│   └── workouts/      # Gestão de treinos
+├── hooks/             # Custom hooks (Firestore)
+├── pages/             # Páginas da aplicação
+└── services/          # Serviços de integração Firestore
+```
+
+---
+
+## 🗄️ Estrutura do Firestore
+
+Para entender como os dados são organizados no Firestore, consulte [FIRESTORE_STRUCTURE.md](./FIRESTORE_STRUCTURE.md).
+
+**Coleções principais:**
+- `users` - Dados dos usuários
+- `periodizations` - Periodizações de treino
+- `workouts` - Treinos criados
+- `exercises` - Exercícios customizados
+- `prs` - Registros de Personal Records
+- `workoutExercises` - Relação treinos ↔ exercícios
+
+---
+
+## 🎨 Regras de Negócio
+
+Para entender as regras de negócio do app, consulte [.cursorrules](./.cursorrules).
+
+**Principais regras:**
+- Apenas uma periodização pode estar ativa por vez
+- Todos os PRs são registrados na periodização ativa
+- Treinos podem conter múltiplos exercícios
+- Exercícios podem aparecer em múltiplos treinos
+- Volume = Peso × Repetições
+
+---
+
+## 🔒 Segurança
+
+O app utiliza **Firebase Authentication** e **Firestore Security Rules** para garantir que:
+- Usuários só acessam seus próprios dados
+- Todas as operações exigem autenticação
+- Validação de dados no backend (Firestore Rules)
+
+---
+
+## 📱 PWA e Mobile
+
+O app é otimizado para dispositivos móveis e pode ser instalado como PWA (Progressive Web App) em smartphones.
+
+---
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido com 💪 por [Seu Nome]

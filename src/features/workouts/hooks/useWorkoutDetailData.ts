@@ -1,5 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
+import { useAuth } from "../../../contexts/AuthContext";
+import { firestore } from "../../../config/firebase";
+import { getLastPRForExercise, calculatePRTrend } from "../../../services/prs.service";
 import type { WorkoutExercisePreview } from "..";
 
 type UseWorkoutDetailDataParams = {
@@ -7,41 +12,91 @@ type UseWorkoutDetailDataParams = {
 };
 
 export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) {
-  // TODO: substituir dados mock por consulta ao Firestore filtrando pelo workoutId.
-  const exercises = useMemo<WorkoutExercisePreview[]>(
-    () => [
-      {
-        id: "supino-reto",
-        name: "Supino Reto",
-        muscleGroup: "Peito, Tríceps",
-        lastPr: { weight: 22, reps: 6, date: "2024-12-06", trend: "up" },
-      },
-      {
-        id: "desenvolvimento",
-        name: "Desenvolvimento",
-        muscleGroup: "Ombros",
-        lastPr: { weight: 18, reps: 8, date: "2024-11-29", trend: "down" },
-      },
-      {
-        id: "rosca-direta",
-        name: "Rosca Direta",
-        muscleGroup: "Bíceps",
-        lastPr: { weight: 14, reps: 10, date: "2024-11-22", trend: "steady" },
-      },
-      {
-        id: "triceps-testa",
-        name: "Tríceps Testa",
-        muscleGroup: "Tríceps",
-        lastPr: { weight: 12, reps: 12, date: "2024-11-19", trend: "down" },
-      },
-    ],
-    [workoutId],
-  );
+  const { user } = useAuth();
+  const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!user || !workoutId) {
+      setLoading(false);
+      return;
+    }
+
+    const loadWorkoutExercises = async () => {
+      try {
+        setLoading(true);
+
+        // Busca os exercícios associados ao treino
+        const workoutExercisesPath = `users/${user.uid}/workoutExercises`;
+        const workoutExercisesQuery = query(
+          collection(firestore, workoutExercisesPath),
+          where("workoutId", "==", workoutId)
+        );
+
+        const workoutExercisesSnap = await getDocs(workoutExercisesQuery);
+
+        if (workoutExercisesSnap.empty) {
+          setExercises([]);
+          setLoading(false);
+          return;
+        }
+
+        // Para cada exercício, busca seus dados e último PR
+        const exercisesPromises = workoutExercisesSnap.docs.map(async (workoutExerciseDoc) => {
+          const workoutExerciseData = workoutExerciseDoc.data();
+          const exerciseId = workoutExerciseData.exerciseId;
+
+          // Busca dados do exercício
+          const exercisesPath = `users/${user.uid}/exercises`;
+          const exerciseRef = doc(firestore, exercisesPath, exerciseId);
+          const exerciseSnap = await getDoc(exerciseRef);
+
+          if (!exerciseSnap.exists()) {
+            return null;
+          }
+
+          const exerciseData = exerciseSnap.data();
+
+          // Busca o último PR
+          const lastPr = await getLastPRForExercise(user.uid, exerciseId);
+
+          return {
+            id: exerciseId,
+            name: exerciseData.name,
+            muscleGroup: exerciseData.muscleGroup,
+            lastPr: lastPr
+              ? {
+                  weight: lastPr.weight,
+                  reps: lastPr.reps,
+                  date: lastPr.date,
+                  trend: "steady" as const,
+                }
+              : undefined,
+          };
+        });
+
+        const exercisesData = await Promise.all(exercisesPromises);
+        const filteredExercises = exercisesData.filter(
+          (ex): ex is WorkoutExercisePreview => ex !== null
+        );
+
+        setExercises(filteredExercises);
+        setLoading(false);
+      } catch (err) {
+        console.error("Erro ao carregar exercícios do treino:", err);
+        setError(err as Error);
+        setLoading(false);
+      }
+    };
+
+    loadWorkoutExercises();
+  }, [user, workoutId]);
 
   return {
     exercises,
-    loading: false,
-    error: null as Error | null,
+    loading,
+    error,
   };
 }
 

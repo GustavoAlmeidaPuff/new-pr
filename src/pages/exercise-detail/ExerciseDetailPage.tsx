@@ -7,19 +7,18 @@ import { ExerciseInsightsCard } from "../../features/exercises/components/Exerci
 import { ExerciseTrendChart } from "../../features/exercises/components/ExerciseTrendChart";
 import { PRHistoryList } from "../../features/exercises/components/PRHistoryList";
 import { useExerciseDetailData } from "../../features/exercises/hooks/useExerciseDetailData";
+import { CreatePRModal } from "../../components/modals/CreatePRModal";
 
 export function ExerciseDetailPage() {
   const { exerciseId } = useParams();
   const { exercise, loading } = useExerciseDetailData({ exerciseId });
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isPRModalOpen, setIsPRModalOpen] = useState(false);
 
   const handleRegisterPr = () => {
-    setIsRegistering(true);
-    // TODO: abrir modal para registrar PR via Firestore.
-    console.info("Registrar PR acionado");
+    setIsPRModalOpen(true);
   };
 
-  if (loading) {
+  if (loading || !exercise) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-text-muted">
         Carregando exercício...
@@ -28,24 +27,29 @@ export function ExerciseDetailPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <ExerciseHeader exercise={exercise} />
+    <>
+      <section className="space-y-6">
+        <ExerciseHeader exercise={exercise} />
 
-      <CurrentPRCard exercise={exercise} onRegister={handleRegisterPr} />
+        <CurrentPRCard exercise={exercise} onRegister={handleRegisterPr} />
 
-      <ExerciseTrendChart exercise={exercise} />
+        <ExerciseTrendChart exercise={exercise} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <PRHistoryList history={exercise.history} />
-        <ExerciseInsightsCard insights={exercise.insights} />
-      </div>
-
-      {isRegistering && (
-        <div className="rounded-3xl border border-border bg-background-card p-5 text-sm text-text-muted">
-          Formulário de registro de PR será implementado em breve.
+        <div className="grid gap-4 lg:grid-cols-2">
+          <PRHistoryList history={exercise.history} />
+          <ExerciseInsightsCard insights={exercise.insights} />
         </div>
+      </section>
+
+      {exerciseId && (
+        <CreatePRModal
+          isOpen={isPRModalOpen}
+          onClose={() => setIsPRModalOpen(false)}
+          exerciseId={exerciseId}
+          exerciseName={exercise.name}
+        />
       )}
-    </section>
+    </>
   );
 }
 
