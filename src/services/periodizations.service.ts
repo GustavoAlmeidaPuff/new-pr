@@ -1,7 +1,7 @@
 import {
+  DocumentReference,
   collection,
   doc,
-  getDocs,
   query,
   serverTimestamp,
   writeBatch,
@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 
+import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 import type { Periodization } from "../features/periodizations/types";
 
@@ -40,14 +41,19 @@ export async function createPeriodization(input: CreatePeriodizationInput): Prom
   const periodizationsPath = getPeriodizationsPath(input.userId);
 
   // Desativa todas as periodizações ativas do usuário
-  const activeQuery = query(
-    collection(firestore, periodizationsPath),
-    where("status", "==", "active")
+  const activePeriodizations = await getCollectionData<{ ref: DocumentReference }>(
+    `periodizations:${input.userId}:active`,
+    {
+      queryFactory: () =>
+        query(collection(firestore, periodizationsPath), where("status", "==", "active")),
+      map: (docSnap) => ({
+        ref: docSnap.ref,
+      }),
+    },
   );
 
-  const activeSnapshot = await getDocs(activeQuery);
-  activeSnapshot.docs.forEach((docSnap) => {
-    batch.update(docSnap.ref, {
+  activePeriodizations.forEach(({ ref }) => {
+    batch.update(ref, {
       status: "completed",
       completedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -82,14 +88,19 @@ export async function activatePeriodization(
   const periodizationsPath = getPeriodizationsPath(userId);
 
   // Desativa todas as periodizações ativas do usuário
-  const activeQuery = query(
-    collection(firestore, periodizationsPath),
-    where("status", "==", "active")
+  const activePeriodizations = await getCollectionData<{ ref: DocumentReference }>(
+    `periodizations:${userId}:active`,
+    {
+      queryFactory: () =>
+        query(collection(firestore, periodizationsPath), where("status", "==", "active")),
+      map: (docSnap) => ({
+        ref: docSnap.ref,
+      }),
+    },
   );
 
-  const activeSnapshot = await getDocs(activeQuery);
-  activeSnapshot.docs.forEach((docSnap) => {
-    batch.update(docSnap.ref, {
+  activePeriodizations.forEach(({ ref }) => {
+    batch.update(ref, {
       status: "completed",
       completedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -119,16 +130,19 @@ export async function getActivePeriodization(
     limit(1)
   );
 
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    return null;
-  }
+  const results = await getCollectionData<Periodization>(
+    `periodizations:${userId}:active:single`,
+    {
+      queryFactory: () => q,
+      map: (docSnap) =>
+        ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }) as Periodization,
+    },
+  );
 
-  const docSnap = snapshot.docs[0];
-  return {
-    id: docSnap.id,
-    ...docSnap.data(),
-  } as Periodization;
+  return results[0] ?? null;
 }
 
 /**
@@ -142,25 +156,34 @@ export async function incrementPeriodizationPRs(
   const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
   const batch = writeBatch(firestore);
 
-  // Busca o documento para obter o valor atual
-  const snapshot = await getDocs(
-    query(
-      collection(firestore, periodizationsPath),
-      where("__name__", "==", periodizationId)
-    )
+  const currentPeriodization = await getDocumentData<Periodization | null>(
+    `periodizations:${userId}:${periodizationId}`,
+    {
+      refFactory: () => periodizationRef,
+      map: (docSnap) => {
+        if (!docSnap || !docSnap.exists()) {
+          return null;
+        }
+        return {
+          id: docSnap.id,
+          ...docSnap.data(),
+        } as Periodization;
+      },
+    },
   );
 
-  if (!snapshot.empty) {
-    const currentData = snapshot.docs[0].data();
-    const currentPrs = currentData.prs || 0;
-
-    batch.update(periodizationRef, {
-      prs: currentPrs + 1,
-      updatedAt: serverTimestamp(),
-    });
-
-    await batch.commit();
+  if (!currentPeriodization) {
+    return;
   }
+
+  const currentPrs = currentPeriodization.prs || 0;
+
+  batch.update(periodizationRef, {
+    prs: currentPrs + 1,
+    updatedAt: serverTimestamp(),
+  });
+
+  await batch.commit();
 }
 
 /**

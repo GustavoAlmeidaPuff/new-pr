@@ -13,8 +13,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
+import { getDocumentData } from "../cache/firestoreCache";
 import { auth, firestore, googleProvider } from "../config/firebase";
 
 type AuthContextValue = {
@@ -42,9 +43,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (currentUser) {
         const userRef = doc(firestore, "users", currentUser.uid);
-        const snap = await getDoc(userRef);
+        const userData = await getDocumentData<Record<string, unknown> | null>(
+          `users:${currentUser.uid}`,
+          {
+            refFactory: () => userRef,
+            map: (snapshot) => {
+              if (!snapshot || !snapshot.exists()) {
+                return null;
+              }
+              return snapshot.data() as Record<string, unknown>;
+            },
+          },
+        );
 
-        if (snap.exists()) {
+        if (userData) {
           await updateDoc(userRef, {
             displayName: currentUser.displayName,
             email: currentUser.email,

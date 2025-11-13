@@ -1,13 +1,12 @@
 import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
 
 import { WorkoutExerciseCard } from "../../features/workouts/components/WorkoutExerciseCard";
 import { useWorkoutDetailData } from "../../features/workouts/hooks/useWorkoutDetailData";
 import { AddExerciseToWorkoutModal } from "../../components/modals/AddExerciseToWorkoutModal";
 import { useAuth } from "../../contexts/AuthContext";
-import { firestore } from "../../config/firebase";
+import { getWorkoutById, type WorkoutRecord } from "../../services/workouts.service";
 
 export function WorkoutDetailPage() {
   const { workoutId } = useParams();
@@ -22,11 +21,10 @@ export function WorkoutDetailPage() {
 
     const loadWorkoutName = async () => {
       try {
-        const workoutRef = doc(firestore, `users/${user.uid}/workouts/${workoutId}`);
-        const workoutSnap = await getDoc(workoutRef);
+        const workout = await getWorkoutById<WorkoutRecord>(user.uid, workoutId);
 
-        if (workoutSnap.exists()) {
-          setWorkoutName(workoutSnap.data().name);
+        if (workout) {
+          setWorkoutName(workout.name);
         }
       } catch (error) {
         console.error("Erro ao carregar nome do treino:", error);

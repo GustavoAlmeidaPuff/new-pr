@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { doc, getDoc } from "firebase/firestore";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { createPR } from "../../services/prs.service";
 import { getActivePeriodization } from "../../services/periodizations.service";
-import { firestore } from "../../config/firebase";
+import { getExerciseById, type ExerciseRecord } from "../../services/exercises.service";
 
 type CreatePRModalProps = {
   isOpen: boolean;
@@ -46,13 +45,10 @@ export function CreatePRModal({
       // Busca tipo de carga do exercício
       const loadExerciseWeightType = async () => {
         try {
-          const exercisesPath = `users/${user.uid}/exercises`;
-          const exerciseRef = doc(firestore, exercisesPath, exerciseId);
-          const exerciseSnap = await getDoc(exerciseRef);
+          const exercise = await getExerciseById<ExerciseRecord>(user.uid, exerciseId);
 
-          if (exerciseSnap.exists()) {
-            const exerciseData = exerciseSnap.data();
-            setWeightType(exerciseData.weightType || "total");
+          if (exercise) {
+            setWeightType(exercise.weightType || "total");
           }
         } catch (err) {
           console.error("Erro ao carregar tipo de carga:", err);

@@ -1,15 +1,15 @@
 import {
   collection,
   doc,
-  getDocs,
-  getDoc,
   query,
   serverTimestamp,
   writeBatch,
   orderBy,
   limit,
+  where,
 } from "firebase/firestore";
 
+import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 import { incrementPeriodizationPRs } from "./periodizations.service";
 
@@ -56,16 +56,24 @@ export async function createPR(input: CreatePRInput): Promise<string> {
   // Busca o exercício para saber o tipo de carga
   const exercisesPath = `users/${input.userId}/exercises`;
   const exerciseRef = doc(firestore, exercisesPath, input.exerciseId);
-  const exerciseSnap = await getDoc(exerciseRef);
+  const exerciseData = await getDocumentData<{ weightType?: "total" | "per-side" } | null>(
+    `exercise:${input.userId}:${input.exerciseId}`,
+    {
+      refFactory: () => exerciseRef,
+      map: (snapshot) => {
+        if (!snapshot || !snapshot.exists()) {
+          return null;
+        }
+        return snapshot.data() as { weightType?: "total" | "per-side" };
+      },
+    },
+  );
 
   let volume = input.weight * input.reps;
 
   // Se for carga bilateral (per-side), multiplica por 2
-  if (exerciseSnap.exists()) {
-    const exerciseData = exerciseSnap.data();
-    if (exerciseData.weightType === "per-side") {
-      volume = input.weight * 2 * input.reps; // peso de cada lado × 2 × reps
-    }
+  if (exerciseData?.weightType === "per-side") {
+    volume = input.weight * 2 * input.reps; // peso de cada lado × 2 × reps
   }
 
   batch.set(newPRRef, {
@@ -98,24 +106,23 @@ export async function getLastPRForExercise(
   const prsPath = getPRsPath(userId);
   const q = query(
     collection(firestore, prsPath),
+    where("exerciseId", "==", exerciseId),
     orderBy("date", "desc"),
-    limit(1)
+    limit(1),
   );
 
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    return null;
-  }
+  const results = await getCollectionData<PRWithExerciseInfo>(
+    `prs:${userId}:exercise:${exerciseId}:last`,
+    {
+      queryFactory: () => q,
+      map: (docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }) as PRWithExerciseInfo,
+    },
+  );
 
-  const docSnap = snapshot.docs.find((doc) => doc.data().exerciseId === exerciseId);
-  if (!docSnap) {
-    return null;
-  }
-
-  return {
-    id: docSnap.id,
-    ...docSnap.data(),
-  } as PRWithExerciseInfo;
+  return results[0] ?? null;
 }
 
 /**
@@ -126,15 +133,22 @@ export async function getPRsForExercise(
   exerciseId: string
 ): Promise<PRWithExerciseInfo[]> {
   const prsPath = getPRsPath(userId);
-  const q = query(collection(firestore, prsPath), orderBy("date", "desc"));
+  const q = query(
+    collection(firestore, prsPath),
+    where("exerciseId", "==", exerciseId),
+    orderBy("date", "desc"),
+  );
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .filter((doc) => doc.data().exerciseId === exerciseId)
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as PRWithExerciseInfo[];
+  return getCollectionData<PRWithExerciseInfo>(
+    `prs:${userId}:exercise:${exerciseId}:all`,
+    {
+      queryFactory: () => q,
+      map: (docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }) as PRWithExerciseInfo,
+    },
+  );
 }
 
 /**
@@ -167,11 +181,16 @@ export async function getRecentPRs(
   const prsPath = getPRsPath(userId);
   const q = query(collection(firestore, prsPath), orderBy("date", "desc"), limit(limitCount));
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as PRWithExerciseInfo[];
+  return getCollectionData<PRWithExerciseInfo>(
+    `prs:${userId}:recent:${limitCount}`,
+    {
+      queryFactory: () => q,
+      map: (docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }) as PRWithExerciseInfo,
+    },
+  );
 }
 
 /**
@@ -182,13 +201,20 @@ export async function getPRsForPeriodization(
   periodizationId: string
 ): Promise<PRWithExerciseInfo[]> {
   const prsPath = getPRsPath(userId);
-  const q = query(collection(firestore, prsPath), orderBy("date", "desc"));
+  const q = query(
+    collection(firestore, prsPath),
+    where("periodizationId", "==", periodizationId),
+    orderBy("date", "desc"),
+  );
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs
-    .filter((doc) => doc.data().periodizationId === periodizationId)
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as PRWithExerciseInfo[];
+  return getCollectionData<PRWithExerciseInfo>(
+    `prs:${userId}:periodization:${periodizationId}`,
+    {
+      queryFactory: () => q,
+      map: (docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }) as PRWithExerciseInfo,
+    },
+  );
 }

@@ -1,13 +1,13 @@
 import {
   collection,
   doc,
-  getDocs,
   query,
   serverTimestamp,
   writeBatch,
   orderBy,
 } from "firebase/firestore";
 
+import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 
 /**
@@ -90,21 +90,64 @@ export async function deleteExercise(userId: string, exerciseId: string): Promis
 /**
  * Busca exercícios por nome (para busca/autocomplete)
  */
+export type ExerciseRecord = {
+  id: string;
+  name: string;
+  muscleGroup: string;
+  muscles?: string[];
+  notes?: string;
+  weightType?: "total" | "per-side";
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+
 export async function searchExercisesByName(
   userId: string,
   searchTerm: string
 ): Promise<Array<{ id: string; name: string; muscleGroup: string }>> {
   const exercisesPath = getExercisesPath(userId);
-  const q = query(collection(firestore, exercisesPath), orderBy("name"));
+  const queryFactory = () => query(collection(firestore, exercisesPath), orderBy("name"));
 
-  const snapshot = await getDocs(q);
-  const exercises = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    name: doc.data().name,
-    muscleGroup: doc.data().muscleGroup,
-  }));
+  const exercises = await getCollectionData<{ id: string; name: string; muscleGroup: string }>(
+    `exercises:${userId}:all`,
+    {
+      queryFactory,
+      map: (docSnap) => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name,
+          muscleGroup: data.muscleGroup,
+        };
+      },
+    }
+  );
 
   // Filtra localmente por causa das limitações do Firestore
   const normalizedSearch = searchTerm.toLowerCase().trim();
   return exercises.filter((ex) => ex.name.toLowerCase().includes(normalizedSearch));
+}
+
+export async function getExerciseById<T = ExerciseRecord>(
+  userId: string,
+  exerciseId: string,
+  map?: (data: ExerciseRecord) => T
+): Promise<T | null> {
+  const exercisesPath = getExercisesPath(userId);
+
+  return getDocumentData<T | null>(`exercise:${userId}:${exerciseId}`, {
+    refFactory: () => doc(firestore, exercisesPath, exerciseId),
+    map: (snapshot) => {
+      if (!snapshot || !snapshot.exists()) {
+        return null;
+      }
+
+      const payload = {
+        id: snapshot.id,
+        ...snapshot.data(),
+      } as ExerciseRecord;
+
+      return map ? map(payload) : (payload as unknown as T);
+    },
+  });
 }

@@ -1,68 +1,98 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  FirestoreError,
+  DocumentData,
   DocumentReference,
+  DocumentSnapshot,
+  FirestoreError,
   doc,
-  getDoc,
-  onSnapshot,
 } from "firebase/firestore";
 
+import { getDocumentData, subscribeToDocument } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 
 type UseFirestoreDocumentOptions<T> = {
   path: string;
   listen?: boolean;
   map?: (doc: T) => T;
+  cacheKey?: string;
 };
 
 export function useFirestoreDocument<T>({
   path,
   listen = true,
   map,
+  cacheKey,
 }: UseFirestoreDocumentOptions<T>) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<FirestoreError | null>(null);
 
+  const referenceFactory = useMemo(
+    () => () => doc(firestore, path) as DocumentReference<DocumentData>,
+    [path],
+  );
+
+  const effectiveCacheKey = useMemo(
+    () => cacheKey ?? `document:${path}`,
+    [cacheKey, path],
+  );
+
+  const mapSnapshot = useMemo(
+    () => (snapshot: DocumentSnapshot<DocumentData> | null) => {
+      if (!snapshot || !snapshot.exists()) {
+        return null;
+      }
+
+      const payload = { id: snapshot.id, ...snapshot.data() } as T;
+      return map ? map(payload) : payload;
+    },
+    [map],
+  );
+
   useEffect(() => {
-    const ref: DocumentReference = doc(firestore, path);
+    let isMounted = true;
+    setLoading(true);
 
     if (!listen) {
-      getDoc(ref)
-        .then((snapshot) => {
-          if (snapshot.exists()) {
-            const payload = { id: snapshot.id, ...snapshot.data() } as T;
-            setData(map ? map(payload) : payload);
+      getDocumentData<T>(effectiveCacheKey, {
+        refFactory: referenceFactory,
+        map: mapSnapshot,
+      })
+        .then((result) => {
+          if (!isMounted) {
+            return;
           }
+          setData(result);
+          setError(null);
           setLoading(false);
         })
         .catch((err) => {
+          if (!isMounted) {
+            return;
+          }
           setError(err);
           setLoading(false);
         });
-      return;
+
+      return () => {
+        isMounted = false;
+      };
     }
 
-    const unsubscribe = onSnapshot(
-      ref,
-      (snapshot) => {
-        if (!snapshot.exists()) {
-          setData(null);
-        } else {
-          const payload = { id: snapshot.id, ...snapshot.data() } as T;
-          setData(map ? map(payload) : payload);
-        }
-        setLoading(false);
-      },
-      (err) => {
-        setError(err);
-        setLoading(false);
-      },
-    );
+    const unsubscribe = subscribeToDocument<T>(effectiveCacheKey, {
+      refFactory: referenceFactory,
+      map: mapSnapshot,
+    }, (state) => {
+      setData(state.data);
+      setLoading(state.loading);
+      setError(state.error);
+    });
 
-    return () => unsubscribe();
-  }, [listen, map, path]);
+    return () => {
+      unsubscribe();
+    };
+  }, [effectiveCacheKey, listen, mapSnapshot, referenceFactory]);
 
   return { data, loading, error };
 }

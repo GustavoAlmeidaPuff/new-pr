@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
 
 import { useAuth } from "../../../contexts/AuthContext";
-import { firestore } from "../../../config/firebase";
+import { getExerciseById, type ExerciseRecord } from "../../../services/exercises.service";
 import { getPRsForExercise, calculatePRTrend } from "../../../services/prs.service";
 import type { ExerciseSummary, ExercisePR } from "..";
 
@@ -27,15 +26,11 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         setLoading(true);
 
         // Busca os dados do exercício
-        const exercisesPath = `users/${user.uid}/exercises`;
-        const exerciseRef = doc(firestore, exercisesPath, exerciseId);
-        const exerciseSnap = await getDoc(exerciseRef);
+        const exerciseData = await getExerciseById<ExerciseRecord>(user.uid, exerciseId);
 
-        if (!exerciseSnap.exists()) {
+        if (!exerciseData) {
           throw new Error("Exercício não encontrado");
         }
-
-        const exerciseData = exerciseSnap.data();
 
         // Busca os PRs do exercício
         const prs = await getPRsForExercise(user.uid, exerciseId);

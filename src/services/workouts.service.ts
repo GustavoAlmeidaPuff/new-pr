@@ -1,13 +1,14 @@
 import {
+  DocumentReference,
   collection,
   doc,
-  getDocs,
   query,
   serverTimestamp,
   where,
   writeBatch,
 } from "firebase/firestore";
 
+import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 
 /**
@@ -40,6 +41,15 @@ export type AddExerciseToWorkoutInput = {
   workoutId: string;
   exerciseId: string;
   order: number;
+};
+
+export type WorkoutRecord = {
+  id: string;
+  name: string;
+  description?: string;
+  exerciseCount?: number;
+  createdAt?: unknown;
+  updatedAt?: unknown;
 };
 
 /**
@@ -90,14 +100,19 @@ export async function deleteWorkout(userId: string, workoutId: string): Promise<
   const workoutExercisesPath = getWorkoutExercisesPath(userId);
 
   // Remove todos os exercícios associados
-  const exercisesQuery = query(
-    collection(firestore, workoutExercisesPath),
-    where("workoutId", "==", workoutId)
+  const exercises = await getCollectionData<{ ref: DocumentReference }>(
+    `workoutExercises:${userId}:${workoutId}`,
+    {
+      queryFactory: () =>
+        query(collection(firestore, workoutExercisesPath), where("workoutId", "==", workoutId)),
+      map: (docSnap) => ({
+        ref: docSnap.ref,
+      }),
+    },
   );
 
-  const exercisesSnapshot = await getDocs(exercisesQuery);
-  exercisesSnapshot.docs.forEach((docSnap) => {
-    batch.delete(docSnap.ref);
+  exercises.forEach(({ ref }) => {
+    batch.delete(ref);
   });
 
   // Remove o treino
@@ -128,19 +143,25 @@ export async function addExerciseToWorkout(input: AddExerciseToWorkoutInput): Pr
   // Atualiza o contador de exercícios do treino
   const workoutsPath = getWorkoutsPath(input.userId);
   const workoutRef = doc(firestore, workoutsPath, input.workoutId);
-  const workoutSnapshot = await getDocs(
-    query(collection(firestore, workoutsPath), where("__name__", "==", input.workoutId))
+  const workoutData = await getDocumentData<{ exerciseCount?: number } | null>(
+    `workout:${input.userId}:${input.workoutId}`,
+    {
+      refFactory: () => workoutRef,
+      map: (snapshot) => {
+        if (!snapshot || !snapshot.exists()) {
+          return null;
+        }
+        return snapshot.data() as { exerciseCount?: number };
+      },
+    },
   );
 
-  if (!workoutSnapshot.empty) {
-    const currentData = workoutSnapshot.docs[0].data();
-    const currentCount = currentData.exerciseCount || 0;
+  const currentCount = workoutData?.exerciseCount ?? 0;
 
-    batch.update(workoutRef, {
-      exerciseCount: currentCount + 1,
-      updatedAt: serverTimestamp(),
-    });
-  }
+  batch.update(workoutRef, {
+    exerciseCount: currentCount + 1,
+    updatedAt: serverTimestamp(),
+  });
 
   await batch.commit();
   return workoutExerciseRef.id;
@@ -164,19 +185,49 @@ export async function removeExerciseFromWorkout(
   // Atualiza o contador de exercícios do treino
   const workoutsPath = getWorkoutsPath(userId);
   const workoutRef = doc(firestore, workoutsPath, workoutId);
-  const workoutSnapshot = await getDocs(
-    query(collection(firestore, workoutsPath), where("__name__", "==", workoutId))
+  const workoutData = await getDocumentData<{ exerciseCount?: number } | null>(
+    `workout:${userId}:${workoutId}`,
+    {
+      refFactory: () => workoutRef,
+      map: (snapshot) => {
+        if (!snapshot || !snapshot.exists()) {
+          return null;
+        }
+        return snapshot.data() as { exerciseCount?: number };
+      },
+    },
   );
 
-  if (!workoutSnapshot.empty) {
-    const currentData = workoutSnapshot.docs[0].data();
-    const currentCount = currentData.exerciseCount || 0;
+  const currentCount = workoutData?.exerciseCount ?? 0;
 
-    batch.update(workoutRef, {
-      exerciseCount: Math.max(0, currentCount - 1),
-      updatedAt: serverTimestamp(),
-    });
-  }
+  batch.update(workoutRef, {
+    exerciseCount: Math.max(0, currentCount - 1),
+    updatedAt: serverTimestamp(),
+  });
 
   await batch.commit();
+}
+
+export async function getWorkoutById<T = WorkoutRecord>(
+  userId: string,
+  workoutId: string,
+  map?: (data: WorkoutRecord) => T,
+): Promise<T | null> {
+  const workoutRef = doc(firestore, getWorkoutsPath(userId), workoutId);
+
+  return getDocumentData<T | null>(`workout:${userId}:${workoutId}`, {
+    refFactory: () => workoutRef,
+    map: (snapshot) => {
+      if (!snapshot || !snapshot.exists()) {
+        return null;
+      }
+
+      const payload = {
+        id: snapshot.id,
+        ...snapshot.data(),
+      } as WorkoutRecord;
+
+      return map ? map(payload) : (payload as unknown as T);
+    },
+  });
 }
