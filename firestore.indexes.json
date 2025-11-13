@@ -1,0 +1,34 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "prs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "exerciseId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "prs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "periodizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
+

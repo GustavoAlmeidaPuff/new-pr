@@ -190,12 +190,18 @@ export function getCollectionData<T>(key: string, options: {
   map?: (doc: QueryDocumentSnapshot<DocumentData>) => T;
 }): Promise<T[]> {
   return new Promise<T[]>((resolve, reject) => {
-    const unsubscribe = subscribeToCollection<T>(key, options, (state) => {
+    let unsubscribe: (() => void) | undefined;
+
+    unsubscribe = subscribeToCollection<T>(key, options, (state) => {
       if (state.loading) {
         return;
       }
 
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      } else {
+        queueMicrotask(() => unsubscribe?.());
+      }
 
       if (state.error) {
         reject(state.error);
@@ -252,12 +258,18 @@ export function getDocumentData<T>(
   },
 ): Promise<T | null> {
   return new Promise<T | null>((resolve, reject) => {
-    const unsubscribe = subscribeToDocument<T>(key, options, (state) => {
+    let unsubscribe: (() => void) | undefined;
+
+    unsubscribe = subscribeToDocument<T>(key, options, (state) => {
       if (state.loading) {
         return;
       }
 
-      unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      } else {
+        queueMicrotask(() => unsubscribe?.());
+      }
 
       if (state.error) {
         reject(state.error);
