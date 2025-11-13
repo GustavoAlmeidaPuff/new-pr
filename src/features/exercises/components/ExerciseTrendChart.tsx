@@ -4,7 +4,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
-  type TooltipProps,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts";
@@ -16,12 +16,12 @@ type ExerciseTrendChartProps = {
   exercise: ExerciseSummary;
 };
 
-type ExerciseTrendTooltipProps = TooltipProps<number, string> & {
+type ExerciseTrendTooltipProps = TooltipContentProps<number, string | number> & {
   weightType?: ExerciseSummary["weightType"];
   history: ExerciseSummary["history"];
 };
 
-type ExerciseVolumeTooltipProps = TooltipProps<number, string>;
+type ExerciseVolumeTooltipProps = TooltipContentProps<number, string | number>;
 
 const volumeFormatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 0,
@@ -159,9 +159,14 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
               />
               <Tooltip
                 cursor={{ stroke: "#24354A" }}
-                content={(props) => (
+                content={(props: TooltipContentProps<number, string | number>) => (
                   <ExerciseTrendTooltip
-                    {...props}
+                    active={props.active}
+                    payload={props.payload}
+                    label={props.label}
+                    coordinate={props.coordinate}
+                    accessibilityLayer={props.accessibilityLayer}
+                    activeIndex={props.activeIndex}
                     weightType={exercise.weightType}
                     history={exercise.history}
                   />
@@ -207,7 +212,19 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
                   tick={{ fill: "#9FB5CA", fontSize: 12 }}
                   dx={-8}
                 />
-                <Tooltip cursor={{ stroke: "#24354A" }} content={(props) => <ExerciseVolumeTooltip {...props} />} />
+                <Tooltip
+                  cursor={{ stroke: "#24354A" }}
+                  content={(props: TooltipContentProps<number, string | number>) => (
+                    <ExerciseVolumeTooltip
+                      active={props.active}
+                      payload={props.payload}
+                      label={props.label}
+                      coordinate={props.coordinate}
+                      accessibilityLayer={props.accessibilityLayer}
+                      activeIndex={props.activeIndex}
+                    />
+                  )}
+                />
                 <Area
                   type="monotone"
                   dataKey="volume"
