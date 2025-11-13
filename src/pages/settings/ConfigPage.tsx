@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bell, Download, HelpCircle, LogOut, User } from "lucide-react";
+import { ArrowUpRight, Download, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Skeleton } from "../../components/loading";
@@ -46,21 +46,8 @@ export function ConfigPage() {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
-  const handleProfile = () => {
-    // TODO: abrir modal de perfil.
-    console.info("Perfil acionado");
-  };
-
-  const handleNotifications = () => {
-    console.info("Notificações acionado");
-  };
-
   const handleExportData = () => {
     console.info("Exportar dados acionado");
-  };
-
-  const handleHelp = () => {
-    console.info("Ajuda acionado");
   };
 
   const handleLogout = async () => {
@@ -126,20 +113,6 @@ export function ConfigPage() {
               </div>
             </div>
           </div>
-          <div className="space-y-3">
-            <SettingsActionCard
-              title="Perfil"
-              description="Gerenciar informações pessoais"
-              icon={User}
-              onClick={handleProfile}
-            />
-            <SettingsActionCard
-              title="Notificações"
-              description="Preferências de alertas"
-              icon={Bell}
-              onClick={handleNotifications}
-            />
-          </div>
         </section>
 
         <section className="space-y-3">
@@ -154,12 +127,6 @@ export function ConfigPage() {
 
         <section className="space-y-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted">Suporte</h2>
-          <SettingsActionCard
-            title="Ajuda"
-            description="Central de suporte"
-            icon={HelpCircle}
-            onClick={handleHelp}
-          />
           <SettingsActionCard
             title="Sair"
             description="Encerrar sessão"
