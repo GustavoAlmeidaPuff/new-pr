@@ -1,7 +1,8 @@
 import type { User } from "firebase/auth";
 import {
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from "firebase/auth";
@@ -35,6 +36,13 @@ type AuthProviderProps = {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Verifica o resultado do redirect ao carregar
+  useEffect(() => {
+    getRedirectResult(auth).catch((error) => {
+      console.error("Erro no redirect:", error);
+    });
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -79,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    await signInWithRedirect(auth, googleProvider);
   };
 
   const signInAsGuest = async () => {
