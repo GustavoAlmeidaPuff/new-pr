@@ -121,12 +121,12 @@ function ExerciseVolumeTooltip({ active, payload, label }: ExerciseVolumeTooltip
 
 export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
   return (
-    <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
-      <header>
-        <p className="text-xs font-medium uppercase tracking-wide text-metric-load">Evolução de carga</p>
-        <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
-      </header>
-      <div className="space-y-8">
+    <div className="space-y-5">
+      <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
+        <header>
+          <p className="text-xs font-medium uppercase tracking-wide text-metric-load">Evolução de carga</p>
+          <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
+        </header>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={exercise.trendSeries}>
@@ -183,62 +183,65 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <section className="space-y-3">
+      </article>
+      <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
+        <header>
           <p className="text-xs font-medium uppercase tracking-wide text-metric-volume">Volume total</p>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={exercise.trendSeries}>
-                <defs>
-                  <linearGradient id="exerciseVolumeGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="#7B5CFF" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#1E2B3E" strokeDasharray="4 6" />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(value) =>
-                    new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
-                  }
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "#9FB5CA", fontSize: 12 }}
-                  dy={8}
-                />
-                <YAxis
-                  tickFormatter={(value) => volumeFormatter.format(Number(value))}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "#9FB5CA", fontSize: 12 }}
-                  dx={-8}
-                />
-                <Tooltip
-                  cursor={{ stroke: "#24354A" }}
-                  content={(props: TooltipContentProps<number, string | number>) => (
-                    <ExerciseVolumeTooltip
-                      active={props.active}
-                      payload={props.payload}
-                      label={props.label}
-                      coordinate={props.coordinate}
-                      accessibilityLayer={props.accessibilityLayer}
-                      activeIndex={props.activeIndex}
-                    />
-                  )}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="volume"
-                  stroke="#7B5CFF"
-                  strokeWidth={2}
-                  fill="url(#exerciseVolumeGradient)"
-                  activeDot={{ r: 5, fill: "#7B5CFF" }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
-    </article>
+          <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
+        </header>
+        <div className="h-56 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={exercise.trendSeries}>
+              <defs>
+                <linearGradient id="exerciseVolumeGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.6} />
+                  <stop offset="100%" stopColor="#7B5CFF" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#1E2B3E" strokeDasharray="4 6" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(value) =>
+                  new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                }
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "#9FB5CA", fontSize: 12 }}
+                dy={8}
+              />
+              <YAxis
+                tickFormatter={(value) => volumeFormatter.format(Number(value))}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "#9FB5CA", fontSize: 12 }}
+                dx={-8}
+              />
+              <Tooltip
+                cursor={{ stroke: "#24354A" }}
+                content={(props: TooltipContentProps<number, string | number>) => (
+                  <ExerciseVolumeTooltip
+                    active={props.active}
+                    payload={props.payload}
+                    label={props.label}
+                    coordinate={props.coordinate}
+                    accessibilityLayer={props.accessibilityLayer}
+                    activeIndex={props.activeIndex}
+                  />
+                )}
+              />
+              <Area
+                type="monotone"
+                dataKey="volume"
+                stroke="#7B5CFF"
+                strokeWidth={2}
+                fill="url(#exerciseVolumeGradient)"
+                activeDot={{ r: 5, fill: "#7B5CFF" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </article>
+    </div>
   );
 }
 
