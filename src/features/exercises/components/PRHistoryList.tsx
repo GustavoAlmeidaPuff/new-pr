@@ -1,9 +1,11 @@
 import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 
 import type { ExercisePR } from "..";
+import { formatWeight } from "../utils/formatWeight";
 
 type PRHistoryListProps = {
   history: ExercisePR[];
+  weightType?: "total" | "per-side";
 };
 
 const trendIconMap: Record<NonNullable<ExercisePR["trend"]>, React.ComponentType<{ className?: string }>> = {
@@ -18,7 +20,7 @@ const trendColorMap: Record<NonNullable<ExercisePR["trend"]>, string> = {
   steady: "text-text-muted",
 };
 
-export function PRHistoryList({ history }: PRHistoryListProps) {
+export function PRHistoryList({ history, weightType }: PRHistoryListProps) {
   return (
     <article className="space-y-4 rounded-3xl border border-border bg-background-card p-5">
       <header>
@@ -37,7 +39,7 @@ export function PRHistoryList({ history }: PRHistoryListProps) {
             >
               <div>
                 <p className="font-semibold">
-                  {record.weight} kg × {record.reps} reps
+                  {formatWeight(record.weight, weightType)} × {record.reps} reps
                 </p>
                 <p className="text-xs text-text-muted">{record.periodization}</p>
               </div>
@@ -47,7 +49,7 @@ export function PRHistoryList({ history }: PRHistoryListProps) {
                 </span>
                 <div className={`flex items-center gap-2 ${color}`}>
                   <TrendIcon className="h-4 w-4" />
-                  {record.volume} kg
+                  {formatWeight(record.volume, weightType)}
                 </div>
               </div>
             </div>

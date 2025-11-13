@@ -78,6 +78,7 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
             id: workoutExercise.exerciseId,
             name: exerciseData.name,
             muscleGroup: exerciseData.muscleGroup,
+            weightType: exerciseData.weightType,
             lastPr: lastPr
               ? {
                   weight: lastPr.weight,

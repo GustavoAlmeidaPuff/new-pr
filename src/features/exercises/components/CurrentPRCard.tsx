@@ -1,6 +1,7 @@
 import { Trophy } from "lucide-react";
 
 import type { ExerciseSummary } from "..";
+import { formatWeight } from "../utils/formatWeight";
 
 type CurrentPRCardProps = {
   exercise: ExerciseSummary;
@@ -34,7 +35,7 @@ export function CurrentPRCard({ exercise, onRegister }: CurrentPRCardProps) {
       <div className="grid grid-cols-3 gap-3 px-5 py-6 text-center">
         <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
           <p className="text-xs text-text-muted">Carga</p>
-          <p className="mt-1 text-lg font-semibold text-white">{pr.weight} kg</p>
+          <p className="mt-1 text-lg font-semibold text-white">{formatWeight(pr.weight, exercise.weightType)}</p>
         </div>
         <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
           <p className="text-xs text-text-muted">Repetições</p>
@@ -42,7 +43,7 @@ export function CurrentPRCard({ exercise, onRegister }: CurrentPRCardProps) {
         </div>
         <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
           <p className="text-xs text-text-muted">Volume</p>
-          <p className="mt-1 text-lg font-semibold text-white">{pr.volume} kg</p>
+          <p className="mt-1 text-lg font-semibold text-white">{formatWeight(pr.volume, exercise.weightType)}</p>
         </div>
       </div>
 

@@ -66,7 +66,7 @@ export function ExerciseDetailPage() {
         <ExerciseTrendChart exercise={exercise} />
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <PRHistoryList history={exercise.history} />
+          <PRHistoryList history={exercise.history} weightType={exercise.weightType} />
           <ExerciseInsightsCard insights={exercise.insights} />
         </div>
       </section>

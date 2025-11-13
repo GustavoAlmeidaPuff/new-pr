@@ -2,6 +2,7 @@ import { ArrowRight, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { WorkoutExercisePreview } from "..";
+import { formatWeight } from "../../exercises/utils/formatWeight";
 
 type WorkoutExerciseCardProps = {
   exercise: WorkoutExercisePreview;
@@ -37,7 +38,7 @@ export function WorkoutExerciseCard({ exercise }: WorkoutExerciseCardProps) {
         {exercise.lastPr ? (
           <p className={`mt-2 flex items-center gap-2 text-sm font-semibold ${trendStyles[trend]}`}>
             <TrendIcon className="h-4 w-4" />
-            Último PR: {exercise.lastPr.weight} kg × {exercise.lastPr.reps} reps
+            Último PR: {formatWeight(exercise.lastPr.weight, exercise.weightType)} × {exercise.lastPr.reps} reps
           </p>
         ) : (
           <p className="mt-2 text-sm text-text-muted">Ainda sem PR registrado</p>

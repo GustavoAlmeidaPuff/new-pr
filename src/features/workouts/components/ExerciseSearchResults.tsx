@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Skeleton } from "../../../components/loading";
 import type { WorkoutExercisePreview } from "..";
+import { formatWeight } from "../../exercises/utils/formatWeight";
 
 type ExerciseSearchResultsProps = {
   results: WorkoutExercisePreview[];
@@ -62,7 +63,7 @@ export function ExerciseSearchResults({ results, isLoading = false }: ExerciseSe
                 <div className="flex items-center gap-2 text-xs">
                   <Dumbbell className={`h-4 w-4 ${trendIcons[trend]}`} />
                   <span className="font-semibold">
-                    {exercise.lastPr.weight} kg × {exercise.lastPr.reps}
+                    {formatWeight(exercise.lastPr.weight, exercise.weightType)} × {exercise.lastPr.reps}
                   </span>
                   <span className="text-text-muted">
                     {new Date(exercise.lastPr.date).toLocaleDateString("pt-BR")}

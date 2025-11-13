@@ -104,13 +104,13 @@ export type ExerciseRecord = {
 export async function searchExercisesByName(
   userId: string,
   searchTerm: string
-): Promise<Array<{ id: string; name: string; muscleGroup: string }>> {
+): Promise<Array<{ id: string; name: string; muscleGroup: string; weightType?: "total" | "per-side" }>> {
   const exercisesPath = getExercisesPath(userId);
   // Adiciona timestamp ao cache key para forçar atualização
   const cacheKey = `exercises:${userId}:all:${Date.now()}`;
   const queryFactory = () => query(collection(firestore, exercisesPath), orderBy("name"));
 
-  const exercises = await getCollectionData<{ id: string; name: string; muscleGroup: string }>(
+  const exercises = await getCollectionData<{ id: string; name: string; muscleGroup: string; weightType?: "total" | "per-side" }>(
     cacheKey,
     {
       queryFactory,
@@ -120,6 +120,7 @@ export async function searchExercisesByName(
           id: docSnap.id,
           name: data.name,
           muscleGroup: data.muscleGroup,
+          weightType: data.weightType as "total" | "per-side" | undefined,
         };
       },
     }

@@ -14,6 +14,7 @@ export interface ExerciseSummary {
   id: string;
   name: string;
   muscles: string[];
+  weightType?: "total" | "per-side";
   currentPr: {
     weight: number;
     reps: number;

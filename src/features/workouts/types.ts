@@ -9,6 +9,7 @@ export interface WorkoutExercisePreview {
   id: string;
   name: string;
   muscleGroup: string;
+  weightType?: "total" | "per-side";
   lastPr?: {
     weight: number;
     reps: number;

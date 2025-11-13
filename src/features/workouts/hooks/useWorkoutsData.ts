@@ -23,8 +23,8 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
   const { data: workouts, loading: workoutsLoading } = useFirestoreCollection<Workout>({
     path: user ? `users/${user.uid}/workouts` : "workouts",
     constraints: [],
-    orderByField: "createdAt",
-    orderByDirection: "desc",
+    orderByField: "name",
+    orderByDirection: "asc",
   });
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
             id: ex.id,
             name: ex.name,
             muscleGroup: ex.muscleGroup,
+            weightType: ex.weightType,
           }))
         );
       } catch (error) {

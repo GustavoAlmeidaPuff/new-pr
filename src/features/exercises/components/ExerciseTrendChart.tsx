@@ -9,6 +9,7 @@ import {
 } from "recharts";
 
 import type { ExerciseSummary } from "..";
+import { formatWeight } from "../utils/formatWeight";
 
 type ExerciseTrendChartProps = {
   exercise: ExerciseSummary;
@@ -46,7 +47,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
               dy={8}
             />
             <YAxis
-              tickFormatter={(value) => `${weightFormatter.format(Number(value))} kg`}
+              tickFormatter={(value) => formatWeight(Number(value), exercise.weightType)}
               tickLine={false}
               axisLine={false}
               tick={{ fill: "#9FB5CA", fontSize: 12 }}
@@ -54,7 +55,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
             />
             <Tooltip
               labelFormatter={(value) => new Date(value).toLocaleDateString("pt-BR")}
-              formatter={(value) => [`${weightFormatter.format(Number(value))} kg`, "Carga"]}
+              formatter={(value) => [formatWeight(Number(value), exercise.weightType), "Carga"]}
               contentStyle={{
                 backgroundColor: "#0E1621",
                 borderRadius: 16,

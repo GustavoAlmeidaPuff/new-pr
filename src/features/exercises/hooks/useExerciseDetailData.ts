@@ -105,6 +105,7 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
           id: exerciseId,
           name: exerciseData.name,
           muscles: exerciseData.muscles || [exerciseData.muscleGroup],
+          weightType: exerciseData.weightType,
           currentPr: {
             weight: latestPr?.weight ?? 0,
             reps: latestPr?.reps ?? 0,
