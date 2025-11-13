@@ -60,9 +60,8 @@ export function ExerciseSearchResults({ results, isLoading = false }: ExerciseSe
                 <span className="text-xs text-text-muted">{exercise.muscleGroup}</span>
                 {exercise.workoutNames && exercise.workoutNames.length > 0 && (
                   <span className="text-xs text-text-muted">
-                    {exercise.workoutNames.length === 1
-                      ? exercise.workoutNames[0]
-                      : exercise.workoutNames.join(" · ")}
+                    {exercise.workoutNames.length === 1 ? "Treino: " : "Treinos: "}
+                    {exercise.workoutNames.join(" · ")}
                   </span>
                 )}
               </div>

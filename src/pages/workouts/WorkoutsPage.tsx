@@ -56,9 +56,6 @@ export function WorkoutsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-white">Treinos</h1>
-              <p className="text-sm text-text-muted">
-                Organize seus treinos por periodização e encontre exercícios rapidamente.
-              </p>
             </div>
             <button
               type="button"
