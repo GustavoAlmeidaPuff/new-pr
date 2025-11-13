@@ -2,7 +2,6 @@ import type { User } from "firebase/auth";
 import {
   onAuthStateChanged,
   signInWithRedirect,
-  signInWithPopup,
   getRedirectResult,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -88,16 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signInWithGoogle = async () => {
-    // Detecta se é mobile pelo tamanho da tela
-    const isMobile = window.innerWidth <= 768;
-    
-    if (isMobile) {
-      // Em mobile, abre em outra aba
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      // Em desktop, abre popup
-      await signInWithPopup(auth, googleProvider);
-    }
+    await signInWithRedirect(auth, googleProvider);
   };
 
   const signInAsGuest = async () => {
