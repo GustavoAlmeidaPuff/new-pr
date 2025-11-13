@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 
-import { CreatePeriodizationCard } from "../../features/periodizations/components/CreatePeriodizationCard";
-import { PeriodizationCard } from "../../features/periodizations/components/PeriodizationCard";
-import { usePeriodizationsData } from "../../features/periodizations/hooks/usePeriodizationsData";
+import { Skeleton } from "../../components/loading";
 import { CreatePeriodizationModal } from "../../components/modals/CreatePeriodizationModal";
-import { activatePeriodization } from "../../services/periodizations.service";
 import { useAuth } from "../../contexts/AuthContext";
+import { PeriodizationCard } from "../../features/periodizations/components/PeriodizationCard";
+import { CreatePeriodizationCard } from "../../features/periodizations/components/CreatePeriodizationCard";
+import { usePeriodizationsData } from "../../features/periodizations/hooks/usePeriodizationsData";
+import { activatePeriodization } from "../../services/periodizations.service";
 
 export function PeriodizationsPage() {
   const { user } = useAuth();
@@ -34,9 +35,28 @@ export function PeriodizationsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-text-muted">
-        Carregando periodizações...
-      </div>
+      <section className="space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-48 rounded-full" />
+          <Skeleton className="h-4 w-72 rounded-full" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <Skeleton key={index} className="h-48 rounded-3xl" />
+          ))}
+          <Skeleton className="h-48 rounded-3xl" />
+        </div>
+
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-32 rounded-full" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <Skeleton key={index} className="h-44 rounded-3xl" />
+            ))}
+          </div>
+        </div>
+      </section>
     );
   }
 

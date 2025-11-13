@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
+import { doc } from "firebase/firestore";
+import type {
   DocumentData,
   DocumentReference,
   DocumentSnapshot,
   FirestoreError,
-  doc,
 } from "firebase/firestore";
 
 import { getDocumentData, subscribeToDocument } from "../cache/firestoreCache";

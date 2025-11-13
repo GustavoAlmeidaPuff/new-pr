@@ -1,4 +1,5 @@
-import {
+import { onSnapshot } from "firebase/firestore";
+import type {
   DocumentData,
   DocumentReference,
   DocumentSnapshot,
@@ -6,7 +7,6 @@ import {
   Query,
   QueryDocumentSnapshot,
   Unsubscribe,
-  onSnapshot,
 } from "firebase/firestore";
 
 type CacheState<T> = {

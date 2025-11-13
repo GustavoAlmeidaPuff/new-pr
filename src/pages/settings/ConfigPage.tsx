@@ -1,6 +1,7 @@
 import { ArrowUpRight, Bell, Download, HelpCircle, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { Skeleton } from "../../components/loading";
 import { useAuth } from "../../contexts/AuthContext";
 
 type SettingsActionCardProps = {
@@ -42,7 +43,7 @@ function SettingsActionCard({ title, description, icon: Icon, onClick, variant =
 }
 
 export function ConfigPage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleProfile = () => {
@@ -66,6 +67,35 @@ export function ConfigPage() {
     await signOut();
     navigate("/login");
   };
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-48 rounded-full" />
+          <Skeleton className="h-4 w-72 rounded-full" />
+        </div>
+
+        <div className="space-y-4 rounded-3xl border border-border bg-background-card/40 p-5">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-14 w-14 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-40 rounded-full" />
+              <Skeleton className="h-3 w-32 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 rounded-3xl" />
+          ))}
+        </div>
+
+        <Skeleton className="h-4 w-24 rounded-full" />
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">

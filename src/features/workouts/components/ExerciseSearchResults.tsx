@@ -1,10 +1,12 @@
 import { ArrowUpRight, Dumbbell } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { Skeleton } from "../../../components/loading";
 import type { WorkoutExercisePreview } from "..";
 
 type ExerciseSearchResultsProps = {
   results: WorkoutExercisePreview[];
+  isLoading?: boolean;
 };
 
 const trendIcons: Record<"up" | "down" | "steady", string> = {
@@ -13,7 +15,29 @@ const trendIcons: Record<"up" | "down" | "steady", string> = {
   steady: "text-text-muted",
 };
 
-export function ExerciseSearchResults({ results }: ExerciseSearchResultsProps) {
+export function ExerciseSearchResults({ results, isLoading = false }: ExerciseSearchResultsProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3 rounded-3xl border border-border bg-background-card p-4">
+        <Skeleton className="h-4 w-24 rounded-full" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-transparent bg-background-elevated/40 px-4 py-3"
+            >
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-40 rounded-full" />
+                <Skeleton className="h-3 w-24 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (results.length === 0) {
     return null;
   }

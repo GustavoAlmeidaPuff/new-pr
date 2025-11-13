@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
+import { Skeleton } from "../loading";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function ProtectedRoute() {
@@ -8,8 +9,12 @@ export function ProtectedRoute() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-text-muted">
-        Carregando...
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm space-y-4">
+          <Skeleton className="h-12 rounded-2xl" />
+          <Skeleton className="h-12 rounded-2xl" />
+          <Skeleton className="h-12 rounded-2xl" />
+        </div>
       </div>
     );
   }

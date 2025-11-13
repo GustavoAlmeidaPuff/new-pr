@@ -5,6 +5,7 @@ import type { Location } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import logoImg from "../../assets/logo.png";
 import letreiroImg from "../../assets/letreiro.png";
+import { Skeleton } from "../../components/loading";
 
 export function LoginPage() {
   const { user, loading, signInWithGoogle, signInAsGuest } = useAuth();
@@ -52,6 +53,22 @@ export function LoginPage() {
       setAuthenticating(false);
     }
   };
+
+  if (loading && !user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-center text-text">
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="h-32 w-32 rounded-full" />
+          <Skeleton className="h-12 w-48 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-56 rounded-full" />
+        <div className="flex w-full max-w-xs flex-col gap-3">
+          <Skeleton className="h-12 rounded-full" />
+          <Skeleton className="h-12 rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-center text-text">

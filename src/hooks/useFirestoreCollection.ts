@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  DocumentData,
-  FirestoreError,
   QueryConstraint,
   collection,
   orderBy,
   query as buildQuery,
   where,
 } from "firebase/firestore";
+import type { DocumentData, FirestoreError } from "firebase/firestore";
 
 import { subscribeToCollection } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
@@ -61,6 +60,8 @@ export function useFirestoreCollection<T>({
     [constraints],
   );
 
+  const memoizedConstraints = useMemo(() => constraints, [serializedConstraints]);
+
   const effectiveCacheKey = useMemo(
     () =>
       cacheKey ??
@@ -75,7 +76,7 @@ export function useFirestoreCollection<T>({
 
     const queryConstraints: QueryConstraint[] = [
       orderBy(orderByField, orderByDirection),
-      ...constraints,
+      ...memoizedConstraints,
     ];
 
     const queryFactory = () =>
@@ -100,14 +101,7 @@ export function useFirestoreCollection<T>({
     return () => {
       unsubscribe();
     };
-  }, [
-    constraints,
-    effectiveCacheKey,
-    map,
-    orderByDirection,
-    orderByField,
-    path,
-  ]);
+  }, [effectiveCacheKey, orderByDirection, orderByField, path]);
 
   return { data, loading, error };
 }

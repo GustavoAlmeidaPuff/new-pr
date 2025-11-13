@@ -11,6 +11,7 @@ type UseWorkoutsDataReturn = {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   isSearching: boolean;
+  loading: boolean;
 };
 
 export function useWorkoutsData(): UseWorkoutsDataReturn {
@@ -19,7 +20,7 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
   const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const { data: workouts } = useFirestoreCollection<Workout>({
+  const { data: workouts, loading: workoutsLoading } = useFirestoreCollection<Workout>({
     path: user ? `users/${user.uid}/workouts` : "workouts",
     constraints: [],
     orderByField: "createdAt",
@@ -61,6 +62,7 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
     searchTerm,
     setSearchTerm,
     isSearching,
+    loading: user ? workoutsLoading : false,
   };
 }
 

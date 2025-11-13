@@ -1,11 +1,12 @@
 import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { WorkoutExerciseCard } from "../../features/workouts/components/WorkoutExerciseCard";
-import { useWorkoutDetailData } from "../../features/workouts/hooks/useWorkoutDetailData";
+import { Skeleton } from "../../components/loading";
 import { AddExerciseToWorkoutModal } from "../../components/modals/AddExerciseToWorkoutModal";
 import { useAuth } from "../../contexts/AuthContext";
+import { WorkoutExerciseCard } from "../../features/workouts/components/WorkoutExerciseCard";
+import { useWorkoutDetailData } from "../../features/workouts/hooks/useWorkoutDetailData";
 import { getWorkoutById, type WorkoutRecord } from "../../services/workouts.service";
 
 export function WorkoutDetailPage() {
@@ -40,9 +41,19 @@ export function WorkoutDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-text-muted">
-        Carregando exercícios...
-      </div>
+      <section className="space-y-6">
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-16 rounded-full" />
+          <Skeleton className="h-9 w-48 rounded-full" />
+          <Skeleton className="h-4 w-36 rounded-full" />
+        </div>
+
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-36 rounded-3xl" />
+          ))}
+        </div>
+      </section>
     );
   }
 
