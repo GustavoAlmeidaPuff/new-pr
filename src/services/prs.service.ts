@@ -206,10 +206,9 @@ export async function getPRsForPeriodization(
   const q = query(
     collection(firestore, prsPath),
     where("periodizationId", "==", periodizationId),
-    orderBy("date", "desc"),
   );
 
-  return getCollectionData<PRWithExerciseInfo>(
+  const results = await getCollectionData<PRWithExerciseInfo>(
     `prs:${userId}:periodization:${periodizationId}`,
     {
       queryFactory: () => q,
@@ -219,4 +218,10 @@ export async function getPRsForPeriodization(
       }) as PRWithExerciseInfo,
     },
   );
+
+  return results.sort((a, b) => {
+    const dateA = new Date(a.date ?? 0).getTime();
+    const dateB = new Date(b.date ?? 0).getTime();
+    return dateB - dateA;
+  });
 }

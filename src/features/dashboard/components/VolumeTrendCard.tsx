@@ -19,7 +19,14 @@ const formatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 0,
 });
 
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+});
+
 export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
+  const hasData = data.length > 0 && data.some((point) => point.volume > 0);
+
   return (
     <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
       <header className="flex items-center justify-between">
@@ -29,39 +36,49 @@ export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
         </div>
       </header>
       <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <defs>
-              <linearGradient id="volumeGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.85} />
-                <stop offset="100%" stopColor="#7B5CFF" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#1E2B3E" strokeDasharray="4 6" />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "#9FB5CA", fontSize: 12 }}
-              dy={8}
-            />
-            <YAxis
-              tickFormatter={(value) => formatter.format(value as number)}
-              tickLine={false}
-              axisLine={false}
-              tick={{ fill: "#9FB5CA", fontSize: 12 }}
-              dx={-8}
-            />
-            <Tooltip
-              cursor={{ strokeDasharray: "4 2", stroke: "#0F2836" }}
-              contentStyle={{
-                backgroundColor: "#0E1621",
-                borderRadius: 16,
-                border: "1px solid #1E2B3E",
-                color: "#E5F4FF",
-              }}
-              formatter={(value) => [`${formatter.format(Number(value))} kg`, "Volume"]}
-            />
+        {hasData ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <defs>
+                <linearGradient id="volumeGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#7B5CFF" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#1E2B3E" strokeDasharray="4 6" />
+              <XAxis
+                dataKey="label"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "#9FB5CA", fontSize: 12 }}
+                dy={8}
+              />
+              <YAxis
+                tickFormatter={(value) => formatter.format(value as number)}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fill: "#9FB5CA", fontSize: 12 }}
+                dx={-8}
+              />
+              <Tooltip
+                cursor={{ strokeDasharray: "4 2", stroke: "#0F2836" }}
+                contentStyle={{
+                  backgroundColor: "#0E1621",
+                  borderRadius: 16,
+                  border: "1px solid #1E2B3E",
+                  color: "#E5F4FF",
+                }}
+                formatter={(value) => [`${formatter.format(Number(value))} kg`, "Volume"]}
+                labelFormatter={(_, payload) => {
+                  if (!payload || payload.length === 0) {
+                    return "";
+                  }
+                  const { weekStart, weekEnd } = payload[0].payload as DashboardVolumePoint;
+                  const start = dateFormatter.format(new Date(weekStart));
+                  const end = dateFormatter.format(new Date(weekEnd));
+                  return `Semana (${start} - ${end})`;
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="volume"
@@ -70,8 +87,14 @@ export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
                 dot={{ r: 4, fill: "#7B5CFF", strokeWidth: 0 }}
                 activeDot={{ r: 6, fill: "#7B5CFF" }}
               />
-          </LineChart>
-        </ResponsiveContainer>
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-text-muted">
+            <p>Ainda não há dados suficientes para gerar o gráfico.</p>
+            <p>Registre novos PRs para acompanhar seu volume semanal.</p>
+          </div>
+        )}
       </div>
     </article>
   );

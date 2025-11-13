@@ -2,6 +2,9 @@ export type {
   DashboardPeriodization,
   DashboardVolumePoint,
   DashboardQuickStat,
-  DashboardSummary
+  DashboardSummary,
+  DashboardWeeklySnapshot,
+  DashboardWeeklyStreak,
+  DashboardPRHistoryItem,
 } from './types';
 

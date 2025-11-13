@@ -3,6 +3,8 @@ import letreiroImg from "../../assets/letreiro.png";
 import { PeriodizationSummaryCard } from "../../features/dashboard/components/PeriodizationSummaryCard";
 import { QuickStatsGrid } from "../../features/dashboard/components/QuickStatsGrid";
 import { VolumeTrendCard } from "../../features/dashboard/components/VolumeTrendCard";
+import { WeeklyStreakCard } from "../../features/dashboard/components/WeeklyStreakCard";
+import { PRHistoryTimeline } from "../../features/dashboard/components/PRHistoryTimeline";
 import { useDashboardData } from "../../features/dashboard/hooks/useDashboardData";
 
 export function HomePage() {
@@ -45,7 +47,11 @@ export function HomePage() {
 
       <VolumeTrendCard data={data.volumeSeries} />
 
+      <WeeklyStreakCard streak={data.weeklyStreak} />
+
       <QuickStatsGrid stats={data.quickStats} />
+
+      <PRHistoryTimeline items={data.prHistory} />
     </section>
   );
 }
