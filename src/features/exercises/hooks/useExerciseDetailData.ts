@@ -4,7 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../../contexts/AuthContext";
 import { firestore } from "../../../config/firebase";
 import { getPRsForExercise, calculatePRTrend } from "../../../services/prs.service";
-import type { ExerciseSummary } from "..";
+import type { ExerciseSummary, ExercisePR } from "..";
 
 type UseExerciseDetailDataParams = {
   exerciseId?: string;
@@ -41,12 +41,20 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         const prs = await getPRsForExercise(user.uid, exerciseId);
 
         // Calcula tendências
-        const historyWithTrends = prs.map((pr, index) => {
+        const historyWithTrends: ExercisePR[] = prs.map((pr, index) => {
           const previousPr = prs[index + 1];
           const trend = previousPr
             ? calculatePRTrend(pr.volume, previousPr.volume)
             : "steady";
-          return { ...pr, trend };
+          return {
+            id: pr.id,
+            weight: pr.weight,
+            reps: pr.reps,
+            volume: pr.volume,
+            date: pr.date,
+            periodization: pr.periodizationName || "Sem periodização",
+            trend,
+          };
         });
 
         // Prepara série de tendência (últimos 6 registros)
@@ -93,24 +101,18 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
           insights.push("Continue registrando seus PRs para obter insights personalizados!");
         }
 
-        const currentPr = prs[0] || {
-          weight: 0,
-          reps: 0,
-          volume: 0,
-          date: new Date().toISOString().split("T")[0],
-          periodization: "Sem periodização",
-        };
+        const latestPr = prs[0];
 
         setExercise({
           id: exerciseId,
           name: exerciseData.name,
           muscles: exerciseData.muscles || [exerciseData.muscleGroup],
           currentPr: {
-            weight: currentPr.weight,
-            reps: currentPr.reps,
-            volume: currentPr.volume,
-            date: currentPr.date,
-            periodization: currentPr.periodizationName || "Sem periodização",
+            weight: latestPr?.weight ?? 0,
+            reps: latestPr?.reps ?? 0,
+            volume: latestPr?.volume ?? 0,
+            date: latestPr?.date ?? new Date().toISOString().split("T")[0],
+            periodization: latestPr?.periodizationName ?? "Sem periodização",
           },
           insights,
           trendSeries,

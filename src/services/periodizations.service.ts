@@ -5,7 +5,6 @@ import {
   query,
   serverTimestamp,
   writeBatch,
-  orderBy,
   limit,
   where,
 } from "firebase/firestore";

@@ -4,7 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { firestore } from "../../../config/firebase";
-import { getLastPRForExercise, calculatePRTrend } from "../../../services/prs.service";
+import { getLastPRForExercise } from "../../../services/prs.service";
 import type { WorkoutExercisePreview } from "..";
 
 type UseWorkoutDetailDataParams = {
@@ -43,7 +43,7 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
         }
 
         // Para cada exercício, busca seus dados e último PR
-        const exercisesPromises = workoutExercisesSnap.docs.map(async (workoutExerciseDoc) => {
+        const exercisesPromises: Array<Promise<WorkoutExercisePreview | null>> = workoutExercisesSnap.docs.map(async (workoutExerciseDoc) => {
           const workoutExerciseData = workoutExerciseDoc.data();
           const exerciseId = workoutExerciseData.exerciseId;
 
@@ -61,7 +61,7 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
           // Busca o último PR
           const lastPr = await getLastPRForExercise(user.uid, exerciseId);
 
-          return {
+          const exercisePreview: WorkoutExercisePreview = {
             id: exerciseId,
             name: exerciseData.name,
             muscleGroup: exerciseData.muscleGroup,
@@ -70,10 +70,12 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
                   weight: lastPr.weight,
                   reps: lastPr.reps,
                   date: lastPr.date,
-                  trend: "steady" as const,
+                  trend: "steady",
                 }
               : undefined,
           };
+
+          return exercisePreview;
         });
 
         const exercisesData = await Promise.all(exercisesPromises);

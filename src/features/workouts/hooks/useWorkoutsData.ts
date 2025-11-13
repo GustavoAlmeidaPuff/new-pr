@@ -19,7 +19,7 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
   const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const { data: workouts, loading } = useFirestoreCollection<Workout>({
+  const { data: workouts } = useFirestoreCollection<Workout>({
     path: user ? `users/${user.uid}/workouts` : "workouts",
     constraints: [],
     orderByField: "createdAt",
