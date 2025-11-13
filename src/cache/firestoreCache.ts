@@ -82,15 +82,25 @@ function ensureCollectionEntry(
   }
 
   if (!entry.unsubscribe) {
+    console.log('[firestoreCache] Creating onSnapshot subscription', { key });
     entry.unsubscribe = onSnapshot(
       entry.queryFactory(),
       (snapshot) => {
+        console.log('[firestoreCache] Snapshot received', { 
+          key, 
+          docsCount: snapshot.docs.length,
+          docChanges: snapshot.docChanges().map(c => ({
+            type: c.type,
+            id: c.doc.id
+          }))
+        });
         entry.snapshots = snapshot.docs;
         entry.loading = false;
         entry.error = null;
         notifyCollectionListeners(entry);
       },
       (error) => {
+        console.error('[firestoreCache] Snapshot error', { key, error });
         entry.loading = false;
         entry.error = error;
         notifyCollectionListeners(entry);

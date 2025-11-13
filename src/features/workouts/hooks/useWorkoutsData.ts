@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFirestoreCollection } from "../../../hooks/useFirestoreCollection";
@@ -20,9 +20,12 @@ export function useWorkoutsData(): UseWorkoutsDataReturn {
   const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Memoiza os constraints para evitar recriar a subscription
+  const constraints = useMemo(() => [], []);
+
   const { data: workouts, loading: workoutsLoading } = useFirestoreCollection<Workout>({
     path: user ? `users/${user.uid}/workouts` : "workouts",
-    constraints: [],
+    constraints,
     orderByField: "name",
     orderByDirection: "asc",
   });

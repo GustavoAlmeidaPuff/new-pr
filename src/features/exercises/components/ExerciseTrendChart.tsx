@@ -15,11 +15,6 @@ type ExerciseTrendChartProps = {
   exercise: ExerciseSummary;
 };
 
-const weightFormatter = new Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
 export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
   return (
     <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">

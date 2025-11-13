@@ -16,6 +16,11 @@ export function WorkoutsPage() {
     setIsCreateModalOpen(true);
   };
 
+  const handleWorkoutCreated = () => {
+    // O hook useFirestoreCollection já está ouvindo mudanças em tempo real
+    // Este callback garante que o modal só feche após a criação ser confirmada
+  };
+
   if (loading) {
     return (
       <section className="space-y-6">
@@ -84,6 +89,7 @@ export function WorkoutsPage() {
       <CreateWorkoutModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleWorkoutCreated}
       />
     </>
   );

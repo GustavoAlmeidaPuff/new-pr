@@ -7,7 +7,7 @@ import {
   query as buildQuery,
   where,
 } from "firebase/firestore";
-import type { DocumentData, FirestoreError } from "firebase/firestore";
+import type { FirestoreError } from "firebase/firestore";
 
 import { subscribeToCollection } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
@@ -22,7 +22,7 @@ type UseFirestoreCollectionOptions<T> = {
 };
 
 function buildConstraintKey(constraint: QueryConstraint, index: number): string {
-  const constraintRecord = constraint as Record<string, unknown>;
+  const constraintRecord = constraint as unknown as Record<string, unknown>;
   const type =
     (constraintRecord.type as string) ?? constraint.constructor.name ?? `constraint-${index}`;
   const field =
@@ -70,6 +70,12 @@ export function useFirestoreCollection<T>({
   );
 
   useEffect(() => {
+    console.log('[useFirestoreCollection] Setting up subscription', { 
+      path, 
+      effectiveCacheKey,
+      orderByField,
+      orderByDirection 
+    });
     setLoading(true);
 
     const baseRef = collection(firestore, path);
@@ -80,7 +86,7 @@ export function useFirestoreCollection<T>({
     ];
 
     const queryFactory = () =>
-      buildQuery<DocumentData>(baseRef, ...queryConstraints);
+      buildQuery(baseRef, ...queryConstraints);
 
     const unsubscribe = subscribeToCollection<T>(
       effectiveCacheKey,
@@ -92,6 +98,12 @@ export function useFirestoreCollection<T>({
         },
       },
       (state) => {
+        console.log('[useFirestoreCollection] State update received', {
+          path,
+          dataLength: state.data.length,
+          loading: state.loading,
+          error: state.error
+        });
         setData(state.data);
         setLoading(state.loading);
         setError(state.error);
@@ -99,9 +111,10 @@ export function useFirestoreCollection<T>({
     );
 
     return () => {
+      console.log('[useFirestoreCollection] Cleaning up subscription', { path });
       unsubscribe();
     };
-  }, [effectiveCacheKey, orderByDirection, orderByField, path]);
+  }, [effectiveCacheKey, memoizedConstraints, orderByDirection, orderByField, path]);
 
   return { data, loading, error };
 }

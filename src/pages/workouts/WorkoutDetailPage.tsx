@@ -12,7 +12,7 @@ import { getWorkoutById, type WorkoutRecord } from "../../services/workouts.serv
 export function WorkoutDetailPage() {
   const { workoutId } = useParams();
   const { user } = useAuth();
-  const { exercises, loading } = useWorkoutDetailData({ workoutId });
+  const { exercises, loading, refresh } = useWorkoutDetailData({ workoutId });
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Treino");
@@ -113,6 +113,7 @@ export function WorkoutDetailPage() {
           onClose={() => setIsAddModalOpen(false)}
           workoutId={workoutId}
           workoutName={workoutName}
+          onSuccess={refresh}
         />
       )}
     </>

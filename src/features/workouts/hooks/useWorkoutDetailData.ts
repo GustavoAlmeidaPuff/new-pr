@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { collection, query, where } from "firebase/firestore";
 
 import { useAuth } from "../../../contexts/AuthContext";
@@ -17,6 +17,11 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
   const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refresh = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (!user || !workoutId) {
@@ -111,12 +116,13 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
     };
 
     loadWorkoutExercises();
-  }, [user, workoutId]);
+  }, [user, workoutId, refreshTrigger]);
 
   return {
     exercises,
     loading,
     error,
+    refresh,
   };
 }
 

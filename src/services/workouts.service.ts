@@ -56,19 +56,25 @@ export type WorkoutRecord = {
  * Cria um novo treino
  */
 export async function createWorkout(input: CreateWorkoutInput): Promise<string> {
+  console.log('[workouts.service] Creating workout', { input });
   const workoutsPath = getWorkoutsPath(input.userId);
   const newWorkoutRef = doc(collection(firestore, workoutsPath));
   const batch = writeBatch(firestore);
 
-  batch.set(newWorkoutRef, {
+  const workoutData = {
     name: input.name,
     description: input.description || "",
     exerciseCount: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  console.log('[workouts.service] Workout data', { workoutId: newWorkoutRef.id, workoutData });
+
+  batch.set(newWorkoutRef, workoutData);
 
   await batch.commit();
+  console.log('[workouts.service] Workout created successfully', { workoutId: newWorkoutRef.id });
   return newWorkoutRef.id;
 }
 
