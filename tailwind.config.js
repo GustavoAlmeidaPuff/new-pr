@@ -20,6 +20,11 @@ export default {
           DEFAULT: "#09C3F7",
           foreground: "#021520",
         },
+        metric: {
+          load: "#35D0FF",
+          reps: "#2CD889",
+          volume: "#7B5CFF",
+        },
         success: {
           DEFAULT: "#2CD889",
           foreground: "#041914",

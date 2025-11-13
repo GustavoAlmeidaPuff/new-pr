@@ -127,7 +127,7 @@ export function CreatePRModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="weight" className="mb-2 block text-sm font-medium text-text-muted">
+              <label htmlFor="weight" className="mb-2 block text-sm font-medium text-metric-load">
                 {weightType === "per-side" ? "Peso por lado (kg)" : "Peso (kg)"}
               </label>
               <input
@@ -148,7 +148,7 @@ export function CreatePRModal({
             </div>
 
             <div>
-              <label htmlFor="reps" className="mb-2 block text-sm font-medium text-text-muted">
+              <label htmlFor="reps" className="mb-2 block text-sm font-medium text-metric-reps">
                 Repetições
               </label>
               <input

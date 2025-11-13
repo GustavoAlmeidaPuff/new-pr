@@ -38,8 +38,9 @@ export function PRHistoryList({ history, weightType }: PRHistoryListProps) {
               className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background-elevated/40 px-4 py-3 text-sm text-white"
             >
               <div>
-                <p className="font-semibold">
-                  {formatWeight(record.weight, weightType)} × {record.reps} reps
+                <p className="text-sm font-semibold">
+                  <span className="text-metric-load">{formatWeight(record.weight, weightType)}</span>{" "}
+                  × <span className="text-metric-reps">{record.reps} reps</span>
                 </p>
                 <p className="text-xs text-text-muted">{record.periodization}</p>
               </div>
@@ -47,9 +48,11 @@ export function PRHistoryList({ history, weightType }: PRHistoryListProps) {
                 <span className="text-text-muted">
                   {new Date(record.date).toLocaleDateString("pt-BR")}
                 </span>
-                <div className={`flex items-center gap-2 ${color}`}>
-                  <TrendIcon className="h-4 w-4" />
-                  {formatWeight(record.volume, weightType)}
+                <div className="flex items-center gap-2">
+                  <TrendIcon className={`h-4 w-4 ${color}`} />
+                  <span className="font-medium text-metric-volume">
+                    {formatWeight(record.volume, weightType)}
+                  </span>
                 </div>
               </div>
             </div>

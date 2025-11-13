@@ -68,11 +68,11 @@ export function PeriodizationSummaryCard({ periodization }: PeriodizationSummary
           <p className="text-lg font-semibold text-white">{stats.newPrs}</p>
         </div>
         <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
-          <div className="flex items-center gap-2 text-xs text-text-muted">
-            <TrendingUp className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-2 text-xs text-metric-volume">
+            <TrendingUp className="h-4 w-4 text-metric-volume" />
             Volume
           </div>
-          <p className="text-lg font-semibold text-white">
+          <p className="text-lg font-semibold text-metric-volume">
             {stats.volumeChangePercent > 0 ? "+" : ""}
             {stats.volumeChangePercent}%
           </p>

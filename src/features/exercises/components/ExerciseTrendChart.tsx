@@ -67,10 +67,18 @@ function ExerciseTrendTooltip({
       }}
     >
       <p style={{ margin: 0, fontWeight: 600 }}>{parsedDate}</p>
-      <p style={{ margin: "8px 0 0" }}>
-        Carga: {formatWeight(Number(dataPoint?.weight ?? 0), weightType)}
+      <p style={{ margin: "8px 0 0", color: "#35D0FF", fontWeight: 600 }}>
+        Carga:{" "}
+        <span style={{ color: "#E5F4FF", fontWeight: 500 }}>
+          {formatWeight(Number(dataPoint?.weight ?? 0), weightType)}
+        </span>
       </p>
-      <p style={{ margin: "4px 0 0" }}>Repetições: {reps != null ? reps : "-"}</p>
+      <p style={{ margin: "4px 0 0", color: "#2CD889", fontWeight: 600 }}>
+        Repetições:{" "}
+        <span style={{ color: "#E5F4FF", fontWeight: 500 }}>
+          {reps != null ? reps : "-"}
+        </span>
+      </p>
     </div>
   );
 }
@@ -101,8 +109,11 @@ function ExerciseVolumeTooltip({ active, payload, label }: ExerciseVolumeTooltip
       }}
     >
       <p style={{ margin: 0, fontWeight: 600 }}>{parsedDate}</p>
-      <p style={{ margin: "8px 0 0" }}>
-        Volume: {volumeFormatter.format(Number(dataPoint?.volume ?? 0))} kg·rep
+      <p style={{ margin: "8px 0 0", color: "#7B5CFF", fontWeight: 600 }}>
+        Volume:{" "}
+        <span style={{ color: "#E5F4FF", fontWeight: 500 }}>
+          {volumeFormatter.format(Number(dataPoint?.volume ?? 0))} kg·rep
+        </span>
       </p>
     </div>
   );
@@ -112,7 +123,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
   return (
     <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
       <header>
-        <p className="text-xs font-medium uppercase tracking-wide text-primary">Evolução de carga</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-metric-load">Evolução de carga</p>
         <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
       </header>
       <div className="space-y-8">
@@ -168,7 +179,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
           </ResponsiveContainer>
         </div>
         <section className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">Volume total</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-metric-volume">Volume total</p>
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={exercise.trendSeries}>

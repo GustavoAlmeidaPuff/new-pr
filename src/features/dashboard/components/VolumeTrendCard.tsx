@@ -24,7 +24,7 @@ export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
     <article className="space-y-5 rounded-3xl border border-border bg-background-card p-5">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-primary">Volume total (kg)</p>
+          <p className="text-xs font-medium text-metric-volume">Volume total (kg)</p>
           <h2 className="text-xl font-semibold text-white">Aumento semanal</h2>
         </div>
       </header>
@@ -33,8 +33,8 @@ export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
           <LineChart data={data}>
             <defs>
               <linearGradient id="volumeGradient" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#09C3F7" stopOpacity={0.85} />
-                <stop offset="100%" stopColor="#09C3F7" stopOpacity={0.05} />
+                <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.85} />
+                <stop offset="100%" stopColor="#7B5CFF" stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="#1E2B3E" strokeDasharray="4 6" />
@@ -62,14 +62,14 @@ export function VolumeTrendCard({ data }: VolumeTrendCardProps) {
               }}
               formatter={(value) => [`${formatter.format(Number(value))} kg`, "Volume"]}
             />
-            <Line
-              type="monotone"
-              dataKey="volume"
-              stroke="#09C3F7"
-              strokeWidth={3}
-              dot={{ r: 4, fill: "#09C3F7", strokeWidth: 0 }}
-              activeDot={{ r: 6, fill: "#09C3F7" }}
-            />
+              <Line
+                type="monotone"
+                dataKey="volume"
+                stroke="#7B5CFF"
+                strokeWidth={3}
+                dot={{ r: 4, fill: "#7B5CFF", strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: "#7B5CFF" }}
+              />
           </LineChart>
         </ResponsiveContainer>
       </div>

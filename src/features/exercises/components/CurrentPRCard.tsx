@@ -33,17 +33,21 @@ export function CurrentPRCard({ exercise, onRegister }: CurrentPRCardProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-3 px-5 py-6 text-center">
-        <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
-          <p className="text-xs text-text-muted">Carga</p>
-          <p className="mt-1 text-lg font-semibold text-white">{formatWeight(pr.weight, exercise.weightType)}</p>
+        <div className="rounded-2xl border border-metric-load/30 bg-metric-load/10 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-metric-load">Carga</p>
+          <p className="mt-1 text-lg font-semibold text-metric-load">
+            {formatWeight(pr.weight, exercise.weightType)}
+          </p>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
-          <p className="text-xs text-text-muted">Repetições</p>
-          <p className="mt-1 text-lg font-semibold text-white">{pr.reps}</p>
+        <div className="rounded-2xl border border-metric-reps/30 bg-metric-reps/10 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-metric-reps">Repetições</p>
+          <p className="mt-1 text-lg font-semibold text-metric-reps">{pr.reps}</p>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
-          <p className="text-xs text-text-muted">Volume</p>
-          <p className="mt-1 text-lg font-semibold text-white">{formatWeight(pr.volume, exercise.weightType)}</p>
+        <div className="rounded-2xl border border-metric-volume/30 bg-metric-volume/10 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-metric-volume">Volume</p>
+          <p className="mt-1 text-lg font-semibold text-metric-volume">
+            {formatWeight(pr.volume, exercise.weightType)}
+          </p>
         </div>
       </div>
 

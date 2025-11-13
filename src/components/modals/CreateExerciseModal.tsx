@@ -126,7 +126,7 @@ export function CreateExerciseModal({ isOpen, onClose, onSuccess }: CreateExerci
           </div>
 
           <div>
-            <label htmlFor="weightType" className="mb-2 block text-sm font-medium text-text-muted">
+            <label htmlFor="weightType" className="mb-2 block text-sm font-medium text-metric-load">
               Tipo de Carga
             </label>
             <div className="space-y-2">
@@ -140,7 +140,7 @@ export function CreateExerciseModal({ isOpen, onClose, onSuccess }: CreateExerci
                   className="h-4 w-4 text-primary focus:ring-2 focus:ring-primary"
                 />
                 <div>
-                  <div className="font-medium text-white">Carga Total</div>
+                  <div className="font-medium text-metric-load">Carga Total</div>
                   <div className="text-xs text-text-muted">
                     Ex: Máquina de polias, Cadeira Extensora (peso total do aparelho)
                   </div>
@@ -157,7 +157,7 @@ export function CreateExerciseModal({ isOpen, onClose, onSuccess }: CreateExerci
                   className="h-4 w-4 text-primary focus:ring-2 focus:ring-primary"
                 />
                 <div>
-                  <div className="font-medium text-white">Carga por Lado</div>
+                  <div className="font-medium text-metric-load">Carga por Lado</div>
                   <div className="text-xs text-text-muted">
                     Ex: Barra (20kg cada lado), halteres, cabos unilaterais
                   </div>

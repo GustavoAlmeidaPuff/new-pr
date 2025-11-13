@@ -36,9 +36,13 @@ export function WorkoutExerciseCard({ exercise }: WorkoutExerciseCardProps) {
         <h3 className="text-lg font-semibold capitalize">{exercise.name}</h3>
         <p className="text-sm text-text-muted">{exercise.muscleGroup}</p>
         {exercise.lastPr ? (
-          <p className={`mt-2 flex items-center gap-2 text-sm font-semibold ${trendStyles[trend]}`}>
-            <TrendIcon className="h-4 w-4" />
-            Último PR: {formatWeight(exercise.lastPr.weight, exercise.weightType)} × {exercise.lastPr.reps} reps
+          <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-white">
+            <TrendIcon className={`h-4 w-4 ${trendStyles[trend]}`} />
+            Último PR:
+            <span className="text-metric-load">
+              {formatWeight(exercise.lastPr.weight, exercise.weightType)}
+            </span>
+            <span className="text-metric-reps">× {exercise.lastPr.reps} reps</span>
           </p>
         ) : (
           <p className="mt-2 text-sm text-text-muted">Ainda sem PR registrado</p>

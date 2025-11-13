@@ -68,9 +68,10 @@ export function ExerciseSearchResults({ results, isLoading = false }: ExerciseSe
               {exercise.lastPr && (
                 <div className="flex items-center gap-2 text-xs">
                   <Dumbbell className={`h-4 w-4 ${trendIcons[trend]}`} />
-                  <span className="font-semibold">
-                    {formatWeight(exercise.lastPr.weight, exercise.weightType)} × {exercise.lastPr.reps}
+                  <span className="font-semibold text-metric-load">
+                    {formatWeight(exercise.lastPr.weight, exercise.weightType)}
                   </span>
+                  <span className="font-semibold text-metric-reps">× {exercise.lastPr.reps}</span>
                   <span className="text-text-muted">
                     {new Date(exercise.lastPr.date).toLocaleDateString("pt-BR")}
                   </span>
