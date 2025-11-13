@@ -7,14 +7,14 @@ type WorkoutExerciseCardProps = {
   exercise: WorkoutExercisePreview;
 };
 
-const trendStyles: Record<NonNullable<WorkoutExercisePreview["lastPr"]>["trend"], string> = {
+const trendStyles: Record<"up" | "down" | "steady", string> = {
   up: "text-primary",
   down: "text-danger",
   steady: "text-text-muted",
 };
 
 const trendIcons: Record<
-  NonNullable<WorkoutExercisePreview["lastPr"]>["trend"],
+  "up" | "down" | "steady",
   React.ComponentType<{ className?: string }>
 > = {
   up: TrendingUp,

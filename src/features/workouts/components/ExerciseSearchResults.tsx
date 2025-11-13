@@ -7,7 +7,7 @@ type ExerciseSearchResultsProps = {
   results: WorkoutExercisePreview[];
 };
 
-const trendIcons: Record<Required<WorkoutExercisePreview["lastPr"]>["trend"], string> = {
+const trendIcons: Record<"up" | "down" | "steady", string> = {
   up: "text-primary",
   down: "text-danger",
   steady: "text-text-muted",

@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { ChangeEvent } from "react";
+import { type ChangeEvent } from "react";
 
 type WorkoutSearchInputProps = {
   value: string;
