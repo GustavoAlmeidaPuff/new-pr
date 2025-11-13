@@ -106,10 +106,12 @@ export async function searchExercisesByName(
   searchTerm: string
 ): Promise<Array<{ id: string; name: string; muscleGroup: string }>> {
   const exercisesPath = getExercisesPath(userId);
+  // Adiciona timestamp ao cache key para forçar atualização
+  const cacheKey = `exercises:${userId}:all:${Date.now()}`;
   const queryFactory = () => query(collection(firestore, exercisesPath), orderBy("name"));
 
   const exercises = await getCollectionData<{ id: string; name: string; muscleGroup: string }>(
-    `exercises:${userId}:all`,
+    cacheKey,
     {
       queryFactory,
       map: (docSnap) => {

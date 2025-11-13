@@ -34,6 +34,7 @@ export function AddExerciseToWorkoutModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!isOpen || !user) {
@@ -56,7 +57,7 @@ export function AddExerciseToWorkoutModal({
 
     const timeoutId = setTimeout(loadExercises, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, isOpen, user]);
+  }, [searchTerm, isOpen, user, refreshTrigger]);
 
   if (!isOpen) return null;
 
@@ -93,6 +94,8 @@ export function AddExerciseToWorkoutModal({
 
   const handleExerciseCreated = async (exerciseId: string) => {
     setIsCreateModalOpen(false);
+    // Atualiza a lista de exercícios para incluir o recém-criado
+    setRefreshTrigger(prev => prev + 1);
     // Adiciona automaticamente o exercício criado ao treino
     await handleAddExercise(exerciseId);
   };
