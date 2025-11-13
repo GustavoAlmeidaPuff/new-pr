@@ -37,15 +37,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Verifica o resultado do redirect ao carregar
   useEffect(() => {
-    getRedirectResult(auth).catch((error) => {
-      console.error("Erro no redirect:", error);
-    });
-  }, []);
+    let mounted = true;
 
-  useEffect(() => {
+    // Primeiro, verifica se há um redirect result pendente
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && mounted) {
+          // Login bem-sucedido via redirect, o onAuthStateChanged vai detectar
+          console.log("Login via redirect bem-sucedido");
+        }
+      } catch (error) {
+        console.error("Erro no redirect:", error);
+      }
+    };
+
+    checkRedirectResult();
+
+    // Depois, escuta mudanças no estado de autenticação
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!mounted) return;
+
       setUser(currentUser);
       setLoading(false);
 
@@ -83,7 +96,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {

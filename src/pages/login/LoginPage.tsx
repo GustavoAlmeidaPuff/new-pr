@@ -24,8 +24,10 @@ export function LoginPage() {
     return "/";
   }, [location.state]);
 
+  // Redireciona quando o usuário estiver autenticado
   useEffect(() => {
     if (!loading && user) {
+      console.log("Usuário autenticado, redirecionando para:", redirectTo);
       navigate(redirectTo, { replace: true });
     }
   }, [loading, navigate, redirectTo, user]);
@@ -54,7 +56,8 @@ export function LoginPage() {
     }
   };
 
-  if (loading && !user) {
+  // Mostra loading enquanto verifica autenticação ou quando está autenticando
+  if (loading || (authenticating && !error)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6 text-center text-text">
         <div className="flex flex-col items-center gap-4">
