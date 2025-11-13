@@ -12,11 +12,15 @@ import { useExerciseDetailData } from "../../features/exercises/hooks/useExercis
 
 export function ExerciseDetailPage() {
   const { exerciseId } = useParams();
-  const { exercise, loading } = useExerciseDetailData({ exerciseId });
+  const { exercise, loading, refresh } = useExerciseDetailData({ exerciseId });
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
 
   const handleRegisterPr = () => {
     setIsPRModalOpen(true);
+  };
+
+  const handlePRSuccess = () => {
+    refresh();
   };
 
   if (loading) {
@@ -73,6 +77,7 @@ export function ExerciseDetailPage() {
           onClose={() => setIsPRModalOpen(false)}
           exerciseId={exerciseId}
           exerciseName={exercise.name}
+          onSuccess={handlePRSuccess}
         />
       )}
     </>

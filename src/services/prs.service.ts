@@ -111,8 +111,9 @@ export async function getLastPRForExercise(
     limit(1),
   );
 
+  // Adiciona timestamp ao cache key para forçar atualização
   const results = await getCollectionData<PRWithExerciseInfo>(
-    `prs:${userId}:exercise:${exerciseId}:last`,
+    `prs:${userId}:exercise:${exerciseId}:last:${Date.now()}`,
     {
       queryFactory: () => q,
       map: (docSnap) => ({
@@ -139,8 +140,9 @@ export async function getPRsForExercise(
     orderBy("date", "desc"),
   );
 
+  // Adiciona timestamp ao cache key para forçar atualização
   return getCollectionData<PRWithExerciseInfo>(
-    `prs:${userId}:exercise:${exerciseId}:all`,
+    `prs:${userId}:exercise:${exerciseId}:all:${Date.now()}`,
     {
       queryFactory: () => q,
       map: (docSnap) => ({

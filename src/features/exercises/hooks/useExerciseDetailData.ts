@@ -14,6 +14,9 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
   const [exercise, setExercise] = useState<ExerciseSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refresh = () => setRefreshTrigger((prev) => prev + 1);
 
   useEffect(() => {
     if (!user || !exerciseId) {
@@ -123,12 +126,13 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
     };
 
     loadExerciseData();
-  }, [user, exerciseId]);
+  }, [user, exerciseId, refreshTrigger]);
 
   return {
     exercise,
     loading,
     error,
+    refresh,
   };
 }
 
