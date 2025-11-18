@@ -35,3 +35,4 @@ export function ExerciseInsightsCard({ insights }: ExerciseInsightsCardProps) {
 }
 
 
+
