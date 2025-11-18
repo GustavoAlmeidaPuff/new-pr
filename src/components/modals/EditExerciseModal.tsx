@@ -38,13 +38,20 @@ export function EditExerciseModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (exercise) {
-      setName(exercise.name);
-      setMuscleGroup(exercise.muscleGroup);
+    if (exercise && isOpen) {
+      setName(exercise.name || "");
+      setMuscleGroup(exercise.muscleGroup || "Peito");
       setNotes(exercise.notes || "");
       setWeightType(exercise.weightType || "total");
+      setError(null);
     }
-  }, [exercise]);
+    
+    // Reset quando fechar
+    if (!isOpen) {
+      setError(null);
+      setLoading(false);
+    }
+  }, [exercise, isOpen]);
 
   if (!isOpen || !exercise) return null;
 
@@ -61,15 +68,20 @@ export function EditExerciseModal({
       return;
     }
 
+    if (!muscleGroup) {
+      setError("Grupo muscular é obrigatório");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       await updateExercise(user.uid, exercise.id, {
         name: name.trim(),
-        muscleGroup,
+        muscleGroup: muscleGroup,
         notes: notes.trim(),
-        weightType,
+        weightType: weightType,
       });
 
       onSuccess?.();
