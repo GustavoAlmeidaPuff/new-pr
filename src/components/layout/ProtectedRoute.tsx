@@ -7,7 +7,15 @@ export function ProtectedRoute() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  console.log("[PROTECTED ROUTE]", { 
+    loading, 
+    hasUser: !!user, 
+    userEmail: user?.email,
+    pathname: location.pathname 
+  });
+
   if (loading) {
+    console.log("[PROTECTED ROUTE] Mostrando loading...");
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="w-full max-w-sm space-y-4">
@@ -20,9 +28,11 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
+    console.log("[PROTECTED ROUTE] Sem usuário, redirecionando para /login");
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  console.log("[PROTECTED ROUTE] Usuário autenticado, renderizando rota protegida");
   return <Outlet />;
 }
 
