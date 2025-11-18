@@ -2,13 +2,22 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { updateExercise, type ExerciseRecord } from "../../services/exercises.service";
+import { updateExercise } from "../../services/exercises.service";
+
+type EditExerciseInput = {
+  id: string;
+  name: string;
+  muscleGroup?: string;
+  muscles?: string[];
+  notes?: string;
+  weightType?: "total" | "per-side";
+};
 
 type EditExerciseModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  exercise: ExerciseRecord | null;
+  exercise: EditExerciseInput | null;
 };
 
 const MUSCLE_GROUPS = [
@@ -40,7 +49,10 @@ export function EditExerciseModal({
   useEffect(() => {
     if (exercise && isOpen) {
       setName(exercise.name || "");
-      setMuscleGroup(exercise.muscleGroup || "Peito");
+      // Tenta pegar muscleGroup, ou o primeiro muscle da lista, ou fallback para "Peito"
+      const defaultMuscleGroup = exercise.muscleGroup || 
+                                 (exercise.muscles && exercise.muscles.length > 0 ? exercise.muscles[0] : "Peito");
+      setMuscleGroup(defaultMuscleGroup);
       setNotes(exercise.notes || "");
       setWeightType(exercise.weightType || "total");
       setError(null);

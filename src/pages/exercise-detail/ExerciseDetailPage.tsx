@@ -9,7 +9,7 @@ import { ExerciseInsightsCard } from "../../features/exercises/components/Exerci
 import { ExerciseTrendChart } from "../../features/exercises/components/ExerciseTrendChart";
 import { PRHistoryList } from "../../features/exercises/components/PRHistoryList";
 import { useExerciseDetailData } from "../../features/exercises/hooks/useExerciseDetailData";
-import { deleteExercise, type ExerciseRecord } from "../../services/exercises.service";
+import { deleteExercise } from "../../services/exercises.service";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function ExerciseDetailPage() {
@@ -111,7 +111,7 @@ export function ExerciseDetailPage() {
           <EditExerciseModal
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
-            exercise={exercise as ExerciseRecord}
+            exercise={exercise}
             onSuccess={() => {
               refresh();
               setIsEditModalOpen(false);
