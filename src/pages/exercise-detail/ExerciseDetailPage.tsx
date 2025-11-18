@@ -1,19 +1,24 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { Skeleton } from "../../components/loading";
-import { CreatePRModal } from "../../components/modals/CreatePRModal";
+import { CreatePRModal, EditExerciseModal } from "../../components/modals";
 import { CurrentPRCard } from "../../features/exercises/components/CurrentPRCard";
 import { ExerciseHeader } from "../../features/exercises/components/ExerciseHeader";
 import { ExerciseInsightsCard } from "../../features/exercises/components/ExerciseInsightsCard";
 import { ExerciseTrendChart } from "../../features/exercises/components/ExerciseTrendChart";
 import { PRHistoryList } from "../../features/exercises/components/PRHistoryList";
 import { useExerciseDetailData } from "../../features/exercises/hooks/useExerciseDetailData";
+import { deleteExercise, type ExerciseRecord } from "../../services/exercises.service";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function ExerciseDetailPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { exerciseId } = useParams();
   const { exercise, loading, refresh } = useExerciseDetailData({ exerciseId });
   const [isPRModalOpen, setIsPRModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleRegisterPr = () => {
     setIsPRModalOpen(true);
@@ -21,6 +26,24 @@ export function ExerciseDetailPage() {
 
   const handlePRSuccess = () => {
     refresh();
+  };
+
+  const handleEdit = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!user || !exerciseId) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja deletar este exercício? Todos os PRs associados permanecerão salvos.");
+    if (!confirmed) return;
+
+    try {
+      await deleteExercise(user.uid, exerciseId);
+      navigate("/treinos");
+    } catch (error) {
+      console.error("Erro ao deletar exercício:", error);
+    }
   };
 
   if (loading) {
@@ -59,7 +82,11 @@ export function ExerciseDetailPage() {
   return (
     <>
       <section className="space-y-6">
-        <ExerciseHeader exercise={exercise} />
+        <ExerciseHeader 
+          exercise={exercise} 
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
 
         <CurrentPRCard exercise={exercise} onRegister={handleRegisterPr} />
 
@@ -72,13 +99,25 @@ export function ExerciseDetailPage() {
       </section>
 
       {exerciseId && (
-        <CreatePRModal
-          isOpen={isPRModalOpen}
-          onClose={() => setIsPRModalOpen(false)}
-          exerciseId={exerciseId}
-          exerciseName={exercise.name}
-          onSuccess={handlePRSuccess}
-        />
+        <>
+          <CreatePRModal
+            isOpen={isPRModalOpen}
+            onClose={() => setIsPRModalOpen(false)}
+            exerciseId={exerciseId}
+            exerciseName={exercise.name}
+            onSuccess={handlePRSuccess}
+          />
+          
+          <EditExerciseModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            exercise={exercise as ExerciseRecord}
+            onSuccess={() => {
+              refresh();
+              setIsEditModalOpen(false);
+            }}
+          />
+        </>
       )}
     </>
   );

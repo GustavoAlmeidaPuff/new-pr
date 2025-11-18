@@ -2,15 +2,20 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import { Skeleton } from "../../components/loading";
-import { CreateWorkoutModal } from "../../components/modals/CreateWorkoutModal";
+import { CreateWorkoutModal, EditWorkoutModal } from "../../components/modals";
 import { ExerciseSearchResults } from "../../features/workouts/components/ExerciseSearchResults";
 import { WorkoutCard } from "../../features/workouts/components/WorkoutCard";
 import { WorkoutSearchInput } from "../../features/workouts/components/WorkoutSearchInput";
 import { useWorkoutsData } from "../../features/workouts/hooks/useWorkoutsData";
+import { deleteWorkout, type WorkoutRecord } from "../../services/workouts.service";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function WorkoutsPage() {
+  const { user } = useAuth();
   const { workouts, exercises, searchTerm, setSearchTerm, isSearching, loading } = useWorkoutsData();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<WorkoutRecord | null>(null);
 
   const handleCreateWorkout = () => {
     setIsCreateModalOpen(true);
@@ -19,6 +24,24 @@ export function WorkoutsPage() {
   const handleWorkoutCreated = () => {
     // O hook useFirestoreCollection já está ouvindo mudanças em tempo real
     // Este callback garante que o modal só feche após a criação ser confirmada
+  };
+
+  const handleEdit = (workout: WorkoutRecord) => {
+    setEditingWorkout(workout);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja deletar este treino? Todos os exercícios associados também serão removidos.");
+    if (!confirmed) return;
+
+    try {
+      await deleteWorkout(user.uid, id);
+    } catch (error) {
+      console.error("Erro ao deletar treino:", error);
+    }
   };
 
   if (loading) {
@@ -77,7 +100,12 @@ export function WorkoutsPage() {
           </h2>
           <div className="grid gap-4">
             {workouts.map((workout) => (
-              <WorkoutCard key={workout.id} workout={workout} />
+              <WorkoutCard 
+                key={workout.id} 
+                workout={workout}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             ))}
           </div>
         </section>
@@ -87,6 +115,15 @@ export function WorkoutsPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleWorkoutCreated}
+      />
+
+      <EditWorkoutModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingWorkout(null);
+        }}
+        workout={editingWorkout}
       />
     </>
   );

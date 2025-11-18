@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 
 import { Skeleton } from "../../components/loading";
-import { CreatePeriodizationModal } from "../../components/modals/CreatePeriodizationModal";
+import { CreatePeriodizationModal, EditPeriodizationModal } from "../../components/modals";
 import { useAuth } from "../../contexts/AuthContext";
 import { PeriodizationCard } from "../../features/periodizations/components/PeriodizationCard";
 import { CreatePeriodizationCard } from "../../features/periodizations/components/CreatePeriodizationCard";
 import { usePeriodizationsData } from "../../features/periodizations/hooks/usePeriodizationsData";
-import { activatePeriodization } from "../../services/periodizations.service";
+import { activatePeriodization, deletePeriodization } from "../../services/periodizations.service";
+import type { Periodization } from "../../features/periodizations/types";
 
 export function PeriodizationsPage() {
   const { user } = useAuth();
   const { periodizations, loading } = usePeriodizationsData();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPeriodization, setEditingPeriodization] = useState<Periodization | null>(null);
 
   const [active, completed] = useMemo(() => {
     const actives = periodizations.filter((item) => item.status === "active");
@@ -30,6 +33,24 @@ export function PeriodizationsPage() {
       await activatePeriodization(user.uid, id);
     } catch (error) {
       console.error("Erro ao ativar periodização:", error);
+    }
+  };
+
+  const handleEdit = (periodization: Periodization) => {
+    setEditingPeriodization(periodization);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja deletar esta periodização?");
+    if (!confirmed) return;
+
+    try {
+      await deletePeriodization(user.uid, id);
+    } catch (error) {
+      console.error("Erro ao deletar periodização:", error);
     }
   };
 
@@ -77,6 +98,8 @@ export function PeriodizationsPage() {
                 key={periodization.id}
                 periodization={periodization}
                 onActivate={handleActivate}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
             ))}
             <CreatePeriodizationCard onClick={handleCreatePeriodization} />
@@ -93,6 +116,8 @@ export function PeriodizationsPage() {
                     key={periodization.id}
                     periodization={periodization}
                     onActivate={handleActivate}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
                   />
                 ))}
               </div>
@@ -104,6 +129,15 @@ export function PeriodizationsPage() {
       <CreatePeriodizationModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      <EditPeriodizationModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingPeriodization(null);
+        }}
+        periodization={editingPeriodization}
       />
     </>
   );

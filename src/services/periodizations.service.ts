@@ -187,6 +187,37 @@ export async function incrementPeriodizationPRs(
 }
 
 /**
+ * Atualiza uma periodização existente
+ */
+export async function updatePeriodization(
+  userId: string,
+  periodizationId: string,
+  input: UpdatePeriodizationInput
+): Promise<void> {
+  const periodizationsPath = getPeriodizationsPath(userId);
+  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
+  const batch = writeBatch(firestore);
+
+  batch.update(periodizationRef, {
+    ...input,
+    updatedAt: serverTimestamp(),
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Remove uma periodização
+ */
+export async function deletePeriodization(userId: string, periodizationId: string): Promise<void> {
+  const periodizationsPath = getPeriodizationsPath(userId);
+  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
+  const batch = writeBatch(firestore);
+  batch.delete(periodizationRef);
+  await batch.commit();
+}
+
+/**
  * Calcula o progresso de uma periodização
  */
 export function calculatePeriodizationProgress(

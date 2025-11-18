@@ -1,10 +1,12 @@
-import { CalendarDays, CheckCircle2, Flame, TimerReset } from "lucide-react";
+import { CalendarDays, CheckCircle2, Flame, TimerReset, Pencil, Trash2 } from "lucide-react";
 
 import type { Periodization } from "..";
 
 type PeriodizationCardProps = {
   periodization: Periodization;
   onActivate?: (id: string) => void;
+  onEdit?: (periodization: Periodization) => void;
+  onDelete?: (id: string) => void;
 };
 
 function getStatusBadge(status: Periodization["status"]) {
@@ -33,7 +35,7 @@ function getStatusBadge(status: Periodization["status"]) {
   }
 }
 
-export function PeriodizationCard({ periodization, onActivate }: PeriodizationCardProps) {
+export function PeriodizationCard({ periodization, onActivate, onEdit, onDelete }: PeriodizationCardProps) {
   const badge = getStatusBadge(periodization.status);
   const isActive = periodization.status === "active";
 
@@ -47,15 +49,33 @@ export function PeriodizationCard({ periodization, onActivate }: PeriodizationCa
           </div>
           <h2 className="text-xl font-semibold text-white">{periodization.name}</h2>
         </div>
-        {!isActive && (
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => onActivate?.(periodization.id)}
-            className="rounded-full border border-primary/40 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/10"
+            onClick={() => onEdit?.(periodization)}
+            className="rounded-full border border-border p-2 text-text-muted transition hover:border-primary hover:text-primary"
+            title="Editar periodização"
           >
-            Ativar
+            <Pencil className="h-4 w-4" />
           </button>
-        )}
+          <button
+            type="button"
+            onClick={() => onDelete?.(periodization.id)}
+            className="rounded-full border border-border p-2 text-text-muted transition hover:border-red-500 hover:text-red-500"
+            title="Deletar periodização"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          {!isActive && (
+            <button
+              type="button"
+              onClick={() => onActivate?.(periodization.id)}
+              className="rounded-full border border-primary/40 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/10"
+            >
+              Ativar
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="grid grid-cols-3 gap-3 text-sm">
