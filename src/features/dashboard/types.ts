@@ -44,6 +44,7 @@ export interface DashboardPRHistoryItem {
   volume: number;
   date: string;
   notes?: string;
+  isBaseline?: boolean;
 }
 
 export interface DashboardSummary {

@@ -48,9 +48,9 @@ export function useDashboardData() {
         }
 
         // Busca os PRs da periodização ativa
-        const prs = await getPRsForPeriodization(user.uid, activePeriodization.id);
+        const allPRs = await getPRsForPeriodization(user.uid, activePeriodization.id);
 
-        const normalizedPrs = prs
+        const normalizedPrs = allPRs
           .map((pr) => {
             const weight = Number.isFinite(pr.weight) ? pr.weight : Number(pr.weight) || 0;
             const reps = Number.isFinite(pr.reps) ? pr.reps : Number(pr.reps) || 0;
@@ -69,6 +69,9 @@ export function useDashboardData() {
           })
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+        // Filtra apenas PRs válidos (não baseline) para cálculos estatísticos
+        const validPRs = normalizedPrs.filter(pr => !pr.isBaseline);
+
         // Calcula estatísticas
         const startDate = new Date(activePeriodization.startDate);
         const now = new Date();
@@ -78,7 +81,7 @@ export function useDashboardData() {
         const dayInMs = 24 * 60 * 60 * 1000;
         const totalWeeks = Math.max(1, Math.floor((now.getTime() - startTime) / weekInMs) + 1);
 
-        // Calcula volume por semana
+        // Calcula volume por semana (apenas com PRs válidos)
         const weeklyTotals = new Map<
           number,
           {
@@ -87,7 +90,7 @@ export function useDashboardData() {
           }
         >();
 
-        normalizedPrs.forEach((pr) => {
+        validPRs.forEach((pr) => {
           const prDate = new Date(pr.date);
           const weekNumber = Math.max(
             0,
@@ -202,6 +205,7 @@ export function useDashboardData() {
           });
         }
 
+        // Para o histórico, mostra todos os PRs mas marca os baseline
         const prHistory: DashboardPRHistoryItem[] = normalizedPrs.map((pr) => ({
           id: pr.id,
           exerciseId: pr.exerciseId,
@@ -213,6 +217,7 @@ export function useDashboardData() {
           volume: pr.volume,
           date: pr.date,
           notes: pr.notes,
+          isBaseline: pr.isBaseline,
         }));
 
         setData({
@@ -228,7 +233,7 @@ export function useDashboardData() {
             ),
             stats: {
               days: daysPassed,
-              newPrs: normalizedPrs.length,
+              newPrs: validPRs.length, // Conta apenas PRs válidos
               volumeChangePercent,
             },
           },

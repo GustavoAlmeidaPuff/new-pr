@@ -42,8 +42,14 @@ export type PRWithExerciseInfo = {
   date: string;
   notes?: string;
   trend?: "up" | "down" | "steady";
+  isBaseline?: boolean;
   createdAt: any;
 };
+
+/**
+ * Número de PRs iniciais que são considerados baseline (métrica inicial)
+ */
+const BASELINE_PR_COUNT = 3;
 
 /**
  * Cria um novo PR
@@ -76,6 +82,14 @@ export async function createPR(input: CreatePRInput): Promise<string> {
     volume = input.weight * 2 * input.reps; // peso de cada lado × 2 × reps
   }
 
+  // Verifica quantos PRs já existem para este exercício (ordenados por data)
+  const existingPRs = await getPRsForExercise(input.userId, input.exerciseId);
+  // Conta apenas PRs que não são baseline (ou seja, PRs válidos)
+  // PRs antigos sem o campo isBaseline são considerados válidos
+  const validPRsCount = existingPRs.filter(pr => pr.isBaseline !== true).length;
+  // Se ainda não temos PRs válidos suficientes, este é um baseline
+  const isBaseline = validPRsCount < BASELINE_PR_COUNT;
+
   batch.set(newPRRef, {
     exerciseId: input.exerciseId,
     periodizationId: input.periodizationId,
@@ -84,14 +98,17 @@ export async function createPR(input: CreatePRInput): Promise<string> {
     volume,
     date: input.date,
     notes: input.notes || "",
+    isBaseline,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 
   await batch.commit();
 
-  // Incrementa o contador de PRs da periodização
-  await incrementPeriodizationPRs(input.userId, input.periodizationId);
+  // Incrementa o contador de PRs da periodização apenas se não for baseline
+  if (!isBaseline) {
+    await incrementPeriodizationPRs(input.userId, input.periodizationId);
+  }
 
   return newPRRef.id;
 }

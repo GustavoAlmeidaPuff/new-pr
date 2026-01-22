@@ -8,6 +8,7 @@ export interface ExercisePR {
   date: string;
   periodization: string;
   trend?: ExerciseTrend;
+  isBaseline?: boolean;
 }
 
 export interface ExerciseSummary {

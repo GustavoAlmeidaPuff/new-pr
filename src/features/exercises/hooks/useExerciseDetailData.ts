@@ -36,13 +36,20 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         }
 
         // Busca os PRs do exercício
-        const prs = await getPRsForExercise(user.uid, exerciseId);
-
-        // Calcula tendências
-        const historyWithTrends: ExercisePR[] = prs.map((pr, index) => {
-          const previousPr = prs[index + 1];
-          const trend = previousPr
-            ? calculatePRTrend(pr.volume, previousPr.volume)
+        const allPRs = await getPRsForExercise(user.uid, exerciseId);
+        
+        // Separa PRs baseline e válidos
+        const baselinePRs = allPRs.filter(pr => pr.isBaseline);
+        const validPRs = allPRs.filter(pr => !pr.isBaseline);
+        
+        // Para exibição no histórico, mostra todos os PRs (baseline e válidos)
+        // mas marca os baseline de forma diferente
+        const historyWithTrends: ExercisePR[] = allPRs.map((pr, index) => {
+          // Para calcular tendência, só compara com PRs válidos
+          const validIndex = validPRs.findIndex(vpr => vpr.id === pr.id);
+          const previousValidPr = validIndex > 0 ? validPRs[validIndex - 1] : null;
+          const trend = previousValidPr && !pr.isBaseline
+            ? calculatePRTrend(pr.volume, previousValidPr.volume)
             : "steady";
           return {
             id: pr.id,
@@ -51,12 +58,13 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
             volume: pr.volume,
             date: pr.date,
             periodization: pr.periodizationName || "Sem periodização",
-            trend,
+            trend: pr.isBaseline ? undefined : trend,
+            isBaseline: pr.isBaseline,
           };
         });
 
-        // Prepara série de tendência (últimos 6 registros)
-        const trendSeries = prs
+        // Prepara série de tendência apenas com PRs válidos (últimos 6 registros válidos)
+        const trendSeries = validPRs
           .slice(0, 6)
           .reverse()
           .map((pr) => ({
@@ -67,11 +75,21 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
             volume: pr.volume,
           }));
 
-        // Gera insights
+        // Gera insights apenas com base em PRs válidos
         const insights: string[] = [];
-        if (prs.length >= 2) {
-          const lastPr = prs[0];
-          const previousPr = prs[1];
+        
+        // Adiciona informação sobre baseline se houver
+        if (baselinePRs.length > 0) {
+          if (validPRs.length === 0) {
+            insights.push(`Os primeiros registros dos exercícios são para ter uma métrica inicial, por isso não serão contados como métrica da semana. Continue registrando para estabelecer sua base!`);
+          } else {
+            insights.push(`Os primeiros registros dos exercícios são para ter uma métrica inicial, por isso não são contados como métrica da semana.`);
+          }
+        }
+        
+        if (validPRs.length >= 2) {
+          const lastPr = validPRs[0];
+          const previousPr = validPRs[1];
           const volumeIncrease = ((lastPr.volume - previousPr.volume) / previousPr.volume) * 100;
 
           if (volumeIncrease > 0) {
@@ -86,8 +104,8 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
           }
         }
 
-        if (prs.length >= 3) {
-          const recentPrs = prs.slice(0, 3);
+        if (validPRs.length >= 3) {
+          const recentPrs = validPRs.slice(0, 3);
           const allIncreasing = recentPrs.every((pr, index) => {
             if (index === recentPrs.length - 1) return true;
             return pr.volume > recentPrs[index + 1].volume;
@@ -99,10 +117,15 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         }
 
         if (insights.length === 0) {
-          insights.push("Continue registrando seus PRs para obter insights personalizados!");
+          if (baselinePRs.length > 0) {
+            insights.push("Continue registrando seus PRs para estabelecer sua métrica inicial!");
+          } else {
+            insights.push("Continue registrando seus PRs para obter insights personalizados!");
+          }
         }
 
-        const latestPr = prs[0];
+        // Usa o último PR válido, ou o último baseline se não houver válidos
+        const latestPr = validPRs[0] || allPRs[0];
 
         setExercise({
           id: exerciseId,

@@ -69,13 +69,24 @@ export function PRHistoryTimeline({ items }: PRHistoryTimelineProps) {
                 .map((item) => (
                   <li
                     key={item.id}
-                    className="rounded-2xl border border-border/60 bg-[#0E1621] p-4"
+                    className={`rounded-2xl border p-4 ${
+                      item.isBaseline
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-border/60 bg-[#0E1621]"
+                    }`}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">
-                          {item.exerciseName}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-white">
+                            {item.exerciseName}
+                          </p>
+                          {item.isBaseline && (
+                            <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+                              Métrica inicial
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-text-muted">
                           Volume:{" "}
                           <span className="font-semibold text-white">
