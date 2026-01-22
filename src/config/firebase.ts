@@ -6,6 +6,7 @@ import {
   setPersistence,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -27,6 +28,13 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 });
 
 const firestore = getFirestore(app);
+// Especifica a região das Functions (us-central1 é o padrão)
+const functions = getFunctions(app, "us-central1");
 const googleProvider = new GoogleAuthProvider();
 
-export { app, auth, firestore, googleProvider };
+// Conecta ao emulador local se estiver em desenvolvimento
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true") {
+  connectFunctionsEmulator(functions, "localhost", 5001);
+}
+
+export { app, auth, firestore, functions, googleProvider };

@@ -8,7 +8,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -87,7 +86,7 @@ export function WorkoutDetailPage() {
     });
   }, [localExercises, searchTerm]);
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = async (event: { active: { id: string }; over: { id: string } | null }) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id || !user || !workoutId) {

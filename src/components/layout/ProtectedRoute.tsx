@@ -2,15 +2,24 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { Skeleton } from "../loading";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSubscription } from "../../contexts/SubscriptionContext";
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { isActive, loading: subscriptionLoading } = useSubscription();
   const location = useLocation();
 
+  const loading = authLoading || subscriptionLoading;
+  const isCheckoutPage = location.pathname === "/checkout" || 
+                         location.pathname === "/checkout/success" || 
+                         location.pathname === "/checkout/cancel";
+
   console.log("[PROTECTED ROUTE]", { 
-    loading, 
+    authLoading, 
+    subscriptionLoading,
     hasUser: !!user, 
     userEmail: user?.email,
+    isActive,
     pathname: location.pathname 
   });
 
@@ -32,7 +41,19 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  console.log("[PROTECTED ROUTE] Usuário autenticado, renderizando rota protegida");
+  // Permite acesso às páginas de checkout mesmo sem assinatura ativa
+  if (isCheckoutPage) {
+    console.log("[PROTECTED ROUTE] Página de checkout, permitindo acesso");
+    return <Outlet />;
+  }
+
+  // Bloqueia acesso se não tiver assinatura ativa
+  if (!isActive) {
+    console.log("[PROTECTED ROUTE] Usuário sem assinatura ativa, redirecionando para /checkout");
+    return <Navigate to="/checkout" replace state={{ from: location }} />;
+  }
+
+  console.log("[PROTECTED ROUTE] Usuário autenticado e com assinatura ativa, renderizando rota protegida");
   return <Outlet />;
 }
 

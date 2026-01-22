@@ -41,6 +41,11 @@ service cloud.firestore {
       match /workoutExercises/{workoutExerciseId} {
         allow read, write: if isOwner(userId);
       }
+      
+      // Subcoleção de assinatura
+      match /subscription/{subscriptionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 }

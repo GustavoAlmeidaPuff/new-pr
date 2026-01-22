@@ -9,6 +9,9 @@ import { PeriodizationsPage } from "./pages/periodizations/PeriodizationsPage";
 import { ConfigPage } from "./pages/settings/ConfigPage";
 import { WorkoutDetailPage } from "./pages/workouts/WorkoutDetailPage";
 import { WorkoutsPage } from "./pages/workouts/WorkoutsPage";
+import { CheckoutPage } from "./pages/checkout/CheckoutPage";
+import { CheckoutSuccessPage } from "./pages/checkout/CheckoutSuccessPage";
+import { CheckoutCancelPage } from "./pages/checkout/CheckoutCancelPage";
 
 function App() {
   return (
@@ -17,6 +20,10 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+          <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
+          
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/treinos" element={<WorkoutsPage />} />

@@ -5,11 +5,14 @@ import "./index.css";
 import App from "./App.tsx";
 import "./config/firebase";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <SubscriptionProvider>
+        <App />
+      </SubscriptionProvider>
     </AuthProvider>
   </StrictMode>,
 );

@@ -7,6 +7,7 @@
 - **React 19** + **TypeScript**
 - **Vite** (Build tool)
 - **Firebase** (Authentication + Firestore Database)
+- **Stripe** (Sistema de Pagamento)
 - **Tailwind CSS** (Estilização)
 - **Recharts** (Gráficos)
 - **React Router** (Navegação)
@@ -37,6 +38,10 @@
   - Gráficos de evolução
   - Insights automáticos baseados em desempenho
 - 🔄 **Sincronização em tempo real** com Firestore
+- 💳 **Sistema de Pagamento** com Stripe
+  - Assinatura obrigatória para uso do aplicativo
+  - Checkout integrado
+  - Verificação de status de assinatura em tempo real
 
 ### 🔮 Próximas Features
 
@@ -69,9 +74,10 @@ npm install
 
 3. Configure as variáveis de ambiente:
 
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+Crie um arquivo `.env.local` na raiz do projeto com as seguintes variáveis:
 
 ```env
+# Firebase
 VITE_FIREBASE_API_KEY=sua_api_key
 VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=seu_projeto_id
@@ -79,7 +85,13 @@ VITE_FIREBASE_STORAGE_BUCKET=seu_projeto.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=seu_sender_id
 VITE_FIREBASE_APP_ID=seu_app_id
 VITE_FIREBASE_MEASUREMENT_ID=seu_measurement_id
+
+# Stripe
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
+VITE_STRIPE_PRICE_ID=price_...
 ```
+
+**Nota:** Para mais detalhes sobre configuração do Stripe, consulte [STRIPE_SETUP.md](./STRIPE_SETUP.md).
 
 4. Execute o projeto em desenvolvimento:
 ```bash
@@ -125,6 +137,7 @@ Para entender como os dados são organizados no Firestore, consulte [FIRESTORE_S
 
 **Coleções principais:**
 - `users` - Dados dos usuários
+  - `users/{userId}/subscription/current` - Dados de assinatura
 - `periodizations` - Periodizações de treino
 - `workouts` - Treinos criados
 - `exercises` - Exercícios customizados
