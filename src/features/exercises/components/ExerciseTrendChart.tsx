@@ -295,13 +295,20 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
             height: isPreparingShare ? "auto" : "16rem",
           }}
         >
-          <div
-            className="h-64 w-full transition-opacity duration-100"
-            style={{ opacity: isPreparingShare ? 0 : 1 }}
-            data-share-exclude={isPreparingShare ? "true" : "false"}
-          >
-            {renderTrendChart()}
-          </div>
+          {exercise.trendSeries.length === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center gap-2 text-center text-sm text-text-muted">
+              <p>Ainda não há dados suficientes para gerar o gráfico.</p>
+              <p>Registre novos PRs para acompanhar sua evolução de carga.</p>
+            </div>
+          ) : (
+            <div
+              className="h-64 w-full transition-opacity duration-100"
+              style={{ opacity: isPreparingShare ? 0 : 1 }}
+              data-share-exclude={isPreparingShare ? "true" : "false"}
+            >
+              {renderTrendChart()}
+            </div>
+          )}
 
           {isPreparingShare ? (
             <div className="absolute inset-0 flex h-full w-full flex-col justify-start rounded-2xl border border-border/60 bg-[#0B131D] p-5 text-white shadow-inner shadow-black/30">
@@ -326,8 +333,14 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
           <h2 className="text-xl font-semibold text-white">{exercise.name}</h2>
         </header>
         <div className="h-56 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={exercise.trendSeries}>
+          {exercise.trendSeries.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-text-muted">
+              <p>Ainda não há dados suficientes para gerar o gráfico.</p>
+              <p>Registre novos PRs para acompanhar seu volume total.</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={exercise.trendSeries}>
               <defs>
                 <linearGradient id="exerciseVolumeGradient" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="#7B5CFF" stopOpacity={0.6} />
@@ -375,6 +388,7 @@ export function ExerciseTrendChart({ exercise }: ExerciseTrendChartProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
+          )}
         </div>
       </article>
     </div>

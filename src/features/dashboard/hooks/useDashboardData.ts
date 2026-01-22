@@ -65,12 +65,15 @@ export function useDashboardData() {
               reps,
               volume,
               date,
+              // Garante que isBaseline seja preservado (pode ser undefined para PRs antigos)
+              isBaseline: pr.isBaseline === true,
             };
           })
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         // Filtra apenas PRs válidos (não baseline) para cálculos estatísticos
-        const validPRs = normalizedPrs.filter(pr => !pr.isBaseline);
+        // PRs antigos sem o campo isBaseline são considerados válidos
+        const validPRs = normalizedPrs.filter(pr => pr.isBaseline !== true);
 
         // Calcula estatísticas
         const startDate = new Date(activePeriodization.startDate);
@@ -82,6 +85,8 @@ export function useDashboardData() {
         const totalWeeks = Math.max(1, Math.floor((now.getTime() - startTime) / weekInMs) + 1);
 
         // Calcula volume por semana (apenas com PRs válidos)
+        // PRs baseline NÃO são incluídos aqui para evitar distorção no gráfico semanal
+        // (evita que pareça que bateu PR toda semana no início)
         const weeklyTotals = new Map<
           number,
           {

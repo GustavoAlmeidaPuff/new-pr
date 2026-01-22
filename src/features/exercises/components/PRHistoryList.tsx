@@ -29,7 +29,10 @@ export function PRHistoryList({ history, weightType }: PRHistoryListProps) {
       </header>
 
       <div className="space-y-3">
-        {history.map((record) => {
+        {history.length === 0 ? (
+          <p className="text-sm text-text-muted">Nenhum registro encontrado.</p>
+        ) : (
+          history.map((record) => {
           const TrendIcon = trendIconMap[record.trend ?? "steady"];
           const color = trendColorMap[record.trend ?? "steady"];
           return (
@@ -75,7 +78,8 @@ export function PRHistoryList({ history, weightType }: PRHistoryListProps) {
               </div>
             </div>
           );
-        })}
+          })
+        )}
       </div>
     </article>
   );

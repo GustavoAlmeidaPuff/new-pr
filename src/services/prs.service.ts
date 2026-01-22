@@ -162,10 +162,15 @@ export async function getPRsForExercise(
     `prs:${userId}:exercise:${exerciseId}:all:${Date.now()}`,
     {
       queryFactory: () => q,
-      map: (docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }) as PRWithExerciseInfo,
+      map: (docSnap) => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          // Garante que isBaseline seja preservado (pode ser undefined para PRs antigos)
+          isBaseline: data.isBaseline === true,
+        } as PRWithExerciseInfo;
+      },
     },
   );
 }

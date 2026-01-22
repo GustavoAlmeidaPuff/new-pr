@@ -38,13 +38,28 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         // Busca os PRs do exercício
         const allPRs = await getPRsForExercise(user.uid, exerciseId);
         
+        // Garante que o campo isBaseline seja tratado corretamente
+        // PRs antigos sem o campo são considerados válidos (não baseline)
+        const normalizedPRs = allPRs.map(pr => ({
+          ...pr,
+          isBaseline: pr.isBaseline === true, // Garante boolean explícito
+        }));
+        
         // Separa PRs baseline e válidos
-        const baselinePRs = allPRs.filter(pr => pr.isBaseline);
-        const validPRs = allPRs.filter(pr => !pr.isBaseline);
+        const baselinePRs = normalizedPRs.filter(pr => pr.isBaseline === true);
+        const validPRs = normalizedPRs.filter(pr => pr.isBaseline !== true);
+        
+        // Para exibição no histórico, mostra TODOS os PRs (baseline e válidos)
+        // Ordena por data (mais recente primeiro) para garantir ordem correta
+        const sortedPRs = [...normalizedPRs].sort((a, b) => {
+          const dateA = new Date(a.date).getTime();
+          const dateB = new Date(b.date).getTime();
+          return dateB - dateA; // Mais recente primeiro
+        });
         
         // Para exibição no histórico, mostra todos os PRs (baseline e válidos)
         // mas marca os baseline de forma diferente
-        const historyWithTrends: ExercisePR[] = allPRs.map((pr, index) => {
+        const historyWithTrends: ExercisePR[] = sortedPRs.map((pr, index) => {
           // Para calcular tendência, só compara com PRs válidos
           const validIndex = validPRs.findIndex(vpr => vpr.id === pr.id);
           const previousValidPr = validIndex > 0 ? validPRs[validIndex - 1] : null;
@@ -63,10 +78,13 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
           };
         });
 
-        // Prepara série de tendência apenas com PRs válidos (últimos 6 registros válidos)
-        const trendSeries = validPRs
-          .slice(0, 6)
-          .reverse()
+        // Prepara série de tendência com TODOS os PRs (baseline e válidos)
+        // Na página do exercício, queremos ver a evolução completa incluindo baseline
+        // Ordena por data (mais antigo primeiro) para o gráfico
+        const trendSeries = sortedPRs
+          .slice()
+          .reverse() // Inverte para ter do mais antigo ao mais recente
+          .slice(0, 20) // Limita aos últimos 20 registros para performance
           .map((pr) => ({
             id: pr.id,
             date: pr.date,
@@ -125,7 +143,7 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         }
 
         // Usa o último PR válido, ou o último baseline se não houver válidos
-        const latestPr = validPRs[0] || allPRs[0];
+        const latestPr = validPRs[0] || normalizedPRs[0];
 
         setExercise({
           id: exerciseId,
