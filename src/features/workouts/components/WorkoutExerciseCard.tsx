@@ -1,11 +1,14 @@
-import { ArrowRight, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, GripVertical, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import type { WorkoutExercisePreview } from "..";
+import type { WorkoutExerciseWithId } from "../hooks/useWorkoutDetailData";
 import { formatWeight } from "../../exercises/utils/formatWeight";
 
 type WorkoutExerciseCardProps = {
-  exercise: WorkoutExercisePreview;
+  exercise: WorkoutExercisePreview | WorkoutExerciseWithId;
 };
 
 const trendStyles: Record<"up" | "down" | "steady", string> = {
@@ -27,12 +30,41 @@ export function WorkoutExerciseCard({ exercise }: WorkoutExerciseCardProps) {
   const trend = exercise.lastPr?.trend ?? "steady";
   const TrendIcon = trendIcons[trend];
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <Link
-      to={`/exercicios/${exercise.id}`}
-      className="flex items-center justify-between gap-4 rounded-3xl border border-border bg-background-card px-5 py-4 text-white shadow-card transition hover:border-primary/40 hover:bg-primary/5"
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 rounded-3xl border border-border bg-background-card shadow-card"
     >
-      <div className="space-y-1">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="flex cursor-grab items-center justify-center p-2 text-text-muted transition hover:text-white active:cursor-grabbing"
+        aria-label="Arrastar para reordenar"
+      >
+        <GripVertical className="h-5 w-5" />
+      </button>
+      <Link
+        to={`/exercicios/${exercise.id}`}
+        className="flex flex-1 items-center justify-between gap-4 px-2 py-4 text-white transition hover:border-primary/40 hover:bg-primary/5"
+      >
+        <div className="space-y-1">
         <h3 className="text-lg font-semibold capitalize">{exercise.name}</h3>
         <p className="text-sm text-text-muted">{exercise.muscleGroup}</p>
         {exercise.lastPr ? (
@@ -50,6 +82,7 @@ export function WorkoutExerciseCard({ exercise }: WorkoutExerciseCardProps) {
       </div>
       <ArrowRight className="h-5 w-5 text-text-muted" />
     </Link>
+    </div>
   );
 }
 

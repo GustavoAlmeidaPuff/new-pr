@@ -71,11 +71,13 @@ export function AddExerciseToWorkoutModal({
     setError(null);
 
     try {
+      // Usa ordem negativa para novos exercícios aparecerem no topo
+      // Ordem decrescente: -1, -2, -3... (mais recente primeiro)
       await addExerciseToWorkout({
         userId: user.uid,
         workoutId,
         exerciseId,
-        order: Date.now(), // Usa timestamp como ordem temporária
+        order: -Date.now(), // Ordem negativa para aparecer no topo
       });
 
       onSuccess?.();

@@ -214,6 +214,47 @@ export async function removeExerciseFromWorkout(
   await batch.commit();
 }
 
+/**
+ * Atualiza a ordem de um exercício no treino
+ */
+export async function updateExerciseOrder(
+  userId: string,
+  workoutExerciseId: string,
+  newOrder: number
+): Promise<void> {
+  const workoutExercisesPath = getWorkoutExercisesPath(userId);
+  const workoutExerciseRef = doc(firestore, workoutExercisesPath, workoutExerciseId);
+  const batch = writeBatch(firestore);
+
+  batch.update(workoutExerciseRef, {
+    order: newOrder,
+    updatedAt: serverTimestamp(),
+  });
+
+  await batch.commit();
+}
+
+/**
+ * Atualiza a ordem de múltiplos exercícios no treino
+ */
+export async function updateExercisesOrder(
+  userId: string,
+  updates: Array<{ workoutExerciseId: string; order: number }>
+): Promise<void> {
+  const batch = writeBatch(firestore);
+  const workoutExercisesPath = getWorkoutExercisesPath(userId);
+
+  updates.forEach(({ workoutExerciseId, order }) => {
+    const workoutExerciseRef = doc(firestore, workoutExercisesPath, workoutExerciseId);
+    batch.update(workoutExerciseRef, {
+      order,
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+}
+
 export async function getWorkoutById<T = WorkoutRecord>(
   userId: string,
   workoutId: string,

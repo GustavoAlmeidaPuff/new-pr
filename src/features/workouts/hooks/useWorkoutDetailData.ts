@@ -12,9 +12,14 @@ type UseWorkoutDetailDataParams = {
   workoutId?: string;
 };
 
+export type WorkoutExerciseWithId = WorkoutExercisePreview & {
+  workoutExerciseId: string;
+  order: number;
+};
+
 export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) {
   const { user } = useAuth();
-  const [exercises, setExercises] = useState<WorkoutExercisePreview[]>([]);
+  const [exercises, setExercises] = useState<WorkoutExerciseWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -66,7 +71,7 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
 
         // Para cada exercício, busca seus dados e último PR
         const exercisesPromises: Array<
-          Promise<{ preview: WorkoutExercisePreview; order: number } | null>
+          Promise<WorkoutExerciseWithId | null>
         > = workoutExercises.map(async (workoutExercise) => {
           const exerciseData = (await getExerciseById<ExerciseRecord>(
             user.uid,
@@ -79,11 +84,13 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
 
           const lastPr = await getLastPRForExercise(user.uid, workoutExercise.exerciseId);
 
-          const exercisePreview: WorkoutExercisePreview = {
+          return {
             id: workoutExercise.exerciseId,
+            workoutExerciseId: workoutExercise.id,
             name: exerciseData.name,
             muscleGroup: exerciseData.muscleGroup,
             weightType: exerciseData.weightType,
+            order: workoutExercise.order ?? Number.MAX_SAFE_INTEGER,
             lastPr: lastPr
               ? {
                   weight: lastPr.weight,
@@ -93,18 +100,12 @@ export function useWorkoutDetailData({ workoutId }: UseWorkoutDetailDataParams) 
                 }
               : undefined,
           };
-
-          return {
-            preview: exercisePreview,
-            order: workoutExercise.order ?? Number.MAX_SAFE_INTEGER,
-          };
         });
 
         const exercisesData = await Promise.all(exercisesPromises);
         const filteredExercises = exercisesData
-          .filter((item): item is { preview: WorkoutExercisePreview; order: number } => item !== null)
-          .sort((a, b) => a.order - b.order)
-          .map((item) => item.preview);
+          .filter((item): item is WorkoutExerciseWithId => item !== null)
+          .sort((a, b) => a.order - b.order);
 
         setExercises(filteredExercises);
         setLoading(false);

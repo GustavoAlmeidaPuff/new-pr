@@ -1,14 +1,30 @@
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 import { Skeleton } from "../../components/loading";
 import { AddExerciseToWorkoutModal } from "../../components/modals/AddExerciseToWorkoutModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { WorkoutExerciseCard } from "../../features/workouts/components/WorkoutExerciseCard";
 import { WorkoutSearchInput } from "../../features/workouts/components/WorkoutSearchInput";
-import { useWorkoutDetailData } from "../../features/workouts/hooks/useWorkoutDetailData";
+import { useWorkoutDetailData, type WorkoutExerciseWithId } from "../../features/workouts/hooks/useWorkoutDetailData";
 import { getWorkoutById, type WorkoutRecord } from "../../services/workouts.service";
+import { updateExercisesOrder } from "../../services/workouts.service";
 
 export function WorkoutDetailPage() {
   const { workoutId } = useParams();
@@ -18,6 +34,19 @@ export function WorkoutDetailPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("Treino");
   const [searchTerm, setSearchTerm] = useState("");
+  const [localExercises, setLocalExercises] = useState<WorkoutExerciseWithId[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Sincroniza exercícios locais quando os dados mudam
+  useEffect(() => {
+    setLocalExercises(exercises);
+  }, [exercises]);
 
   useEffect(() => {
     if (!workoutId || !user) return;
@@ -45,10 +74,10 @@ export function WorkoutDetailPage() {
     const normalizedTerm = searchTerm.trim().toLowerCase();
 
     if (normalizedTerm.length === 0) {
-      return exercises;
+      return localExercises;
     }
 
-    return exercises.filter((exercise) => {
+    return localExercises.filter((exercise) => {
       const nameMatch = exercise.name.toLowerCase().includes(normalizedTerm);
       const muscleGroupMatch = exercise.muscleGroup
         ? exercise.muscleGroup.toLowerCase().includes(normalizedTerm)
@@ -56,7 +85,40 @@ export function WorkoutDetailPage() {
 
       return nameMatch || muscleGroupMatch;
     });
-  }, [exercises, searchTerm]);
+  }, [localExercises, searchTerm]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !user || !workoutId) {
+      return;
+    }
+
+    const oldIndex = localExercises.findIndex((ex) => ex.id === active.id);
+    const newIndex = localExercises.findIndex((ex) => ex.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Atualiza a ordem localmente (otimista)
+    const newExercises = arrayMove(localExercises, oldIndex, newIndex);
+    setLocalExercises(newExercises);
+
+    // Calcula novas ordens baseadas nas posições
+    const updates = newExercises.map((exercise, index) => ({
+      workoutExerciseId: exercise.workoutExerciseId,
+      order: index,
+    }));
+
+    try {
+      await updateExercisesOrder(user.uid, updates);
+    } catch (error) {
+      console.error("Erro ao atualizar ordem dos exercícios:", error);
+      // Reverte em caso de erro
+      setLocalExercises(exercises);
+    }
+  };
 
   if (loading) {
     return (
@@ -126,11 +188,22 @@ export function WorkoutDetailPage() {
                 Nenhum exercício encontrado para &ldquo;{searchTerm}&rdquo;.
               </div>
             ) : (
-              <div className="grid gap-4">
-                {filteredExercises.map((exercise) => (
-                  <WorkoutExerciseCard key={exercise.id} exercise={exercise} />
-                ))}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={filteredExercises.map((ex) => ex.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="grid gap-4">
+                    {filteredExercises.map((exercise) => (
+                      <WorkoutExerciseCard key={exercise.id} exercise={exercise} />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         )}
