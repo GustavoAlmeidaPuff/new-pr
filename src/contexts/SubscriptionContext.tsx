@@ -1,21 +1,11 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
   type ReactNode,
 } from "react";
 import { useAuth } from "./AuthContext";
-import {
-  getSubscriptionData,
-  hasActiveSubscription,
-  type SubscriptionData,
-  type SubscriptionStatus,
-} from "../services/subscription.service";
-import { doc, onSnapshot } from "firebase/firestore";
-import { firestore } from "../config/firebase";
+import type { SubscriptionData } from "../services/subscription.service";
 
 type SubscriptionContextValue = {
   subscription: SubscriptionData | null;
@@ -30,93 +20,20 @@ type SubscriptionProviderProps = {
   children: ReactNode;
 };
 
+/**
+ * App gratuito: usuário logado tem acesso total (isActive = true).
+ * Sem verificação de assinatura/Stripe.
+ */
 export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const mountedRef = useRef(true);
+
+  const isActive = !!user;
+  const loading = false;
+  const subscription: SubscriptionData | null = null;
 
   const refreshSubscription = async () => {
-    if (!user) {
-      setSubscription(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const subscriptionData = await getSubscriptionData(user.uid);
-      if (mountedRef.current) {
-        setSubscription(subscriptionData);
-      }
-    } catch (error) {
-      console.error("[SUBSCRIPTION] Erro ao buscar assinatura:", error);
-      if (mountedRef.current) {
-        setSubscription(null);
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-    }
+    // No-op: não há assinatura para atualizar
   };
-
-  useEffect(() => {
-    mountedRef.current = true;
-
-    if (!user) {
-      setSubscription(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    const subscriptionRef = doc(firestore, "users", user.uid, "subscription", "current");
-
-    // Busca inicial
-    refreshSubscription();
-
-    // Escuta mudanças em tempo real
-    const unsubscribe = onSnapshot(
-      subscriptionRef,
-      (snapshot) => {
-        if (!mountedRef.current) return;
-
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          setSubscription({
-            status: data.status as SubscriptionStatus,
-            stripeCustomerId: data.stripeCustomerId,
-            stripeSubscriptionId: data.stripeSubscriptionId,
-            currentPeriodEnd: data.currentPeriodEnd?.toDate() || null,
-            cancelAtPeriodEnd: data.cancelAtPeriodEnd || false,
-            updatedAt: data.updatedAt,
-            createdAt: data.createdAt,
-          });
-        } else {
-          setSubscription(null);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("[SUBSCRIPTION] Erro no listener:", error);
-        if (mountedRef.current) {
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => {
-      mountedRef.current = false;
-      unsubscribe();
-    };
-  }, [user]);
-
-  const isActive = useMemo(() => {
-    if (!subscription || !subscription.status) {
-      return false;
-    }
-    return ["active", "trialing"].includes(subscription.status);
-  }, [subscription]);
 
   const value = useMemo<SubscriptionContextValue>(
     () => ({
@@ -125,7 +42,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       isActive,
       refreshSubscription,
     }),
-    [subscription, loading, isActive]
+    [isActive]
   );
 
   return (
