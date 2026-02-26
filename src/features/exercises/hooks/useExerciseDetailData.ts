@@ -61,7 +61,7 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
         
         // Para exibição no histórico, mostra todos os PRs (baseline e válidos)
         // mas marca os baseline de forma diferente
-        const historyWithTrends: ExercisePR[] = sortedPRs.map((pr, index) => {
+        const historyWithTrends: ExercisePR[] = sortedPRs.map((pr) => {
           // Para calcular tendência, só compara com PRs válidos
           const validIndex = validPRs.findIndex(vpr => vpr.id === pr.id);
           const previousValidPr = validIndex > 0 ? validPRs[validIndex - 1] : null;

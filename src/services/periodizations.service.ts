@@ -1,5 +1,6 @@
 import {
   DocumentReference,
+  addDoc,
   collection,
   doc,
   query,
@@ -32,6 +33,32 @@ function getPeriodizationsPath(userId: string): string {
 }
 
 const DEFAULT_DURATION_DAYS = 14;
+
+export type CreatePeriodizationInput = {
+  userId: string;
+  name: string;
+  startDate: string;
+  durationDays: number;
+};
+
+/**
+ * Cria uma nova periodização para o usuário.
+ */
+export async function createPeriodization(input: CreatePeriodizationInput): Promise<void> {
+  const { userId, name, startDate, durationDays } = input;
+  const periodizationsPath = getPeriodizationsPath(userId);
+  const coll = collection(firestore, periodizationsPath);
+  await addDoc(coll, {
+    name,
+    startDate,
+    durationDays,
+    status: "upcoming",
+    prs: 0,
+    progressPercent: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
 
 /**
  * Garante que existem as 3 periodizações fixas (Base, Shock, Deload).
