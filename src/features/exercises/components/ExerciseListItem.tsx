@@ -26,8 +26,11 @@ export function ExerciseListItem({ exercise, lastPR }: ExerciseListItemProps) {
         <span className="font-medium truncate">{exercise.name}</span>
         <span className="text-xs text-text-muted">{exercise.muscleGroup}</span>
         {lastPR && (
-          <span className="text-xs text-primary">
-            Último PR: {formatWeight(lastPR.weight, exercise.weightType, { includeSideLabel: false })} × {lastPR.reps} reps
+          <span className="text-xs text-text-muted">
+            Último PR:{" "}
+            <span className="text-metric-load">{formatWeight(lastPR.weight, exercise.weightType, { includeSideLabel: false })}</span>
+            {" × "}
+            <span className="text-metric-reps">{lastPR.reps} reps</span>
           </span>
         )}
       </div>
