@@ -1,4 +1,4 @@
-import { CalendarDays, Medal, Plus, TrendingUp } from "lucide-react";
+import { Medal, Plus, TrendingUp } from "lucide-react";
 
 import type { DashboardPeriodization } from "..";
 
@@ -34,36 +34,23 @@ export function PeriodizationSummaryCard({ periodization }: PeriodizationSummary
 
   return (
     <article className="overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-background-card to-background-muted shadow-card">
-      <div className="flex items-center justify-between px-5 pt-5">
+      <div className="px-5 pt-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
-              {periodization.status === "active" ? "Ativo" : "Período"}
+              Ativo
             </span>
             <span className="text-xs text-text-muted">Periodização</span>
           </div>
           <h2 className="text-2xl font-semibold text-white">{periodization.name}</h2>
         </div>
-        <button
-          type="button"
-          className="rounded-full border border-primary/30 bg-primary/10 p-2 text-primary transition hover:bg-primary/20"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 px-5 py-6 text-sm">
-        <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
-          <div className="flex items-center gap-2 text-xs text-text-muted">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            Duração
-          </div>
-          <p className="text-lg font-semibold text-white">{stats.days} dias</p>
-        </div>
+      <div className="grid grid-cols-2 gap-3 px-5 py-6 text-sm">
         <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background-elevated/30 p-3">
           <div className="flex items-center gap-2 text-xs text-text-muted">
             <Medal className="h-4 w-4 text-primary" />
-            PRs novos
+            PRs neste ciclo
           </div>
           <p className="text-lg font-semibold text-white">{stats.newPrs}</p>
         </div>
@@ -77,19 +64,6 @@ export function PeriodizationSummaryCard({ periodization }: PeriodizationSummary
             {stats.volumeChangePercent}%
           </p>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between border-t border-border/60 bg-background-elevated/40 px-5 py-4 text-xs text-text-muted">
-        <span>
-          Iniciado em{" "}
-          <strong className="font-semibold text-white">
-            {new Date(periodization.startDate).toLocaleDateString("pt-BR")}
-          </strong>
-        </span>
-        <span>
-          Progresso{" "}
-          <strong className="font-semibold text-white">{periodization.progressPercent}%</strong>
-        </span>
       </div>
     </article>
   );

@@ -4,7 +4,6 @@ import {
   signInWithRedirect,
   signInWithPopup,
   getRedirectResult,
-  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from "firebase/auth";
 import {
@@ -25,7 +24,6 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInAsGuest: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -147,10 +145,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signInAsGuest = async () => {
-    await signInWithEmailAndPassword(auth, "convidado@newpr.com", "ggamestv27122007");
-  };
-
   const signOut = async () => {
     await firebaseSignOut(auth);
   };
@@ -160,7 +154,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       loading,
       signInWithGoogle,
-      signInAsGuest,
       signOut,
     }),
     [loading, user],
