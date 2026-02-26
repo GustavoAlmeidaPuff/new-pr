@@ -145,7 +145,9 @@ export async function getLastPRForExercise(
 }
 
 /**
- * Busca todos os PRs de um exercício (todas as periodizações)
+ * Busca todos os PRs de um exercício (todas as periodizações).
+ * Usa apenas filtro por exerciseId (sem orderBy no Firestore) para não depender
+ * do índice composto; a ordenação por data é feita em memória.
  */
 export async function getPRsForExercise(
   userId: string,
@@ -155,10 +157,9 @@ export async function getPRsForExercise(
   const q = query(
     collection(firestore, prsPath),
     where("exerciseId", "==", exerciseId),
-    orderBy("date", "desc"),
   );
 
-  return getCollectionData<PRWithExerciseInfo>(
+  const results = await getCollectionData<PRWithExerciseInfo>(
     `prs:${userId}:exercise:${exerciseId}:all:${Date.now()}`,
     {
       queryFactory: () => q,
@@ -172,6 +173,12 @@ export async function getPRsForExercise(
       },
     },
   );
+
+  return results.sort((a, b) => {
+    const dateA = new Date(a.date ?? 0).getTime();
+    const dateB = new Date(b.date ?? 0).getTime();
+    return dateB - dateA;
+  });
 }
 
 /**
