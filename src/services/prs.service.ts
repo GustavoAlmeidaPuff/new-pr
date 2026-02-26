@@ -114,6 +114,51 @@ export async function createPR(input: CreatePRInput): Promise<string> {
   return newPRRef.id;
 }
 
+const MAX_IN_QUERY = 30;
+
+/**
+ * Busca o último PR de cada exercício (por lista de IDs).
+ * Agrupa em memória para evitar N consultas. Firestore limita "in" a 30 itens.
+ */
+export async function getLastPRsForExerciseIds(
+  userId: string,
+  exerciseIds: string[]
+): Promise<Record<string, PRWithExerciseInfo | null>> {
+  if (exerciseIds.length === 0) return {};
+
+  const prsPath = getPRsPath(userId);
+  const result: Record<string, PRWithExerciseInfo | null> = {};
+  exerciseIds.forEach((id) => (result[id] = null));
+
+  for (let i = 0; i < exerciseIds.length; i += MAX_IN_QUERY) {
+    const chunk = exerciseIds.slice(i, i + MAX_IN_QUERY);
+    const q = query(
+      collection(firestore, prsPath),
+      where("exerciseId", "in", chunk),
+    );
+
+    const list = await getCollectionData<PRWithExerciseInfo>(
+      `prs:${userId}:exercises:last:${chunk.join(",")}:${Date.now()}`,
+      {
+        queryFactory: () => q,
+        map: (docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }) as PRWithExerciseInfo,
+      },
+    );
+
+    list.forEach((pr) => {
+      const current = result[pr.exerciseId];
+      if (!current || new Date(pr.date) > new Date(current.date)) {
+        result[pr.exerciseId] = pr;
+      }
+    });
+  }
+
+  return result;
+}
+
 /**
  * Busca o último PR de um exercício
  */

@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../../../contexts/AuthContext";
 import { useFirestoreCollection } from "../../../hooks/useFirestoreCollection";
+import type { PRWithExerciseInfo } from "../../../services/prs.service";
+import { getLastPRsForExerciseIds } from "../../../services/prs.service";
 import type { ExerciseRecord } from "../../../services/exercises.service";
 
 export type ExerciseListItem = Pick<
@@ -9,9 +11,12 @@ export type ExerciseListItem = Pick<
   "id" | "name" | "muscleGroup" | "weightType"
 >;
 
+export type LastPRMap = Record<string, PRWithExerciseInfo | null>;
+
 type UseExercisesListDataReturn = {
   exercises: ExerciseListItem[];
   filteredExercises: ExerciseListItem[];
+  lastPRByExerciseId: LastPRMap;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   loading: boolean;
@@ -24,12 +29,27 @@ function normalizeSearch(value: string): string {
 export function useExercisesListData(): UseExercisesListDataReturn {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [lastPRByExerciseId, setLastPRByExerciseId] = useState<LastPRMap>({});
 
   const { data: exercises, loading } = useFirestoreCollection<ExerciseListItem>({
     path: user ? `users/${user.uid}/exercises` : "users/__placeholder__/exercises",
     orderByField: "name",
     orderByDirection: "asc",
   });
+
+  useEffect(() => {
+    if (!user || exercises.length === 0) {
+      setLastPRByExerciseId({});
+      return;
+    }
+    let cancelled = false;
+    getLastPRsForExerciseIds(user.uid, exercises.map((e) => e.id)).then((map) => {
+      if (!cancelled) setLastPRByExerciseId(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, exercises]);
 
   const filteredExercises = useMemo(() => {
     if (!searchTerm.trim()) return exercises;
@@ -44,6 +64,7 @@ export function useExercisesListData(): UseExercisesListDataReturn {
   return {
     exercises,
     filteredExercises,
+    lastPRByExerciseId,
     searchTerm,
     setSearchTerm,
     loading: user ? loading : false,

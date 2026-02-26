@@ -10,7 +10,7 @@ import { Search } from "lucide-react";
 
 export function ExercisesPage() {
   const navigate = useNavigate();
-  const { filteredExercises, searchTerm, setSearchTerm, loading } = useExercisesListData();
+  const { filteredExercises, lastPRByExerciseId, searchTerm, setSearchTerm, loading } = useExercisesListData();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleCreateSuccess = (exerciseId: string) => {
@@ -82,7 +82,11 @@ export function ExercisesPage() {
           </h2>
           <div className="space-y-3">
             {filteredExercises.map((exercise) => (
-              <ExerciseListItem key={exercise.id} exercise={exercise} />
+              <ExerciseListItem
+                key={exercise.id}
+                exercise={exercise}
+                lastPR={lastPRByExerciseId[exercise.id]}
+              />
             ))}
           </div>
         </section>
