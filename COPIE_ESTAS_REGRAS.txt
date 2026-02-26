@@ -1,3 +1,6 @@
+# Cole no Firebase Console (Firestore > Regras) OU no projeto rode: firebase deploy --only firestore:rules
+# Depois de alterar, publique as regras para os erros "Missing or insufficient permissions" sumirem.
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -31,6 +34,10 @@ service cloud.firestore {
       }
       
       match /workoutExercises/{workoutExerciseId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /subscription/{subscriptionId} {
         allow read, write: if isOwner(userId);
       }
     }

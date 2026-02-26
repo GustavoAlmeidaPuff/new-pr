@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 
 import { useAuth } from "../../../contexts/AuthContext";
-import { getActivePeriodization, calculatePeriodizationProgress } from "../../../services/periodizations.service";
+import {
+  ensureDefaultPeriodizations,
+  getActivePeriodization,
+  calculatePeriodizationProgress,
+} from "../../../services/periodizations.service";
 import { getPRsForPeriodization } from "../../../services/prs.service";
 import { getExerciseById, type ExerciseRecord } from "../../../services/exercises.service";
 import type {
@@ -32,10 +36,12 @@ export function useDashboardData() {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        
-        // Busca a periodização ativa
+
+        // Garante que as 3 periodizações existem (evita loading infinito com banco vazio)
+        await ensureDefaultPeriodizations(user.uid);
+
         const activePeriodization = await getActivePeriodization(user.uid);
-        
+
         if (!activePeriodization) {
           setData({
             periodization: null,

@@ -82,12 +82,13 @@ export async function createPR(input: CreatePRInput): Promise<string> {
     volume = input.weight * 2 * input.reps; // peso de cada lado × 2 × reps
   }
 
-  // Verifica quantos PRs já existem para este exercício (ordenados por data)
-  const existingPRs = await getPRsForExercise(input.userId, input.exerciseId);
-  // Conta apenas PRs que não são baseline (ou seja, PRs válidos)
-  // PRs antigos sem o campo isBaseline são considerados válidos
-  const validPRsCount = existingPRs.filter(pr => pr.isBaseline !== true).length;
-  // Se ainda não temos PRs válidos suficientes, este é um baseline
+  // Conta PRs válidos desta periodização para decidir se este PR é baseline (por periodização)
+  const existingInPeriodization = await getPRsForExerciseInPeriodization(
+    input.userId,
+    input.exerciseId,
+    input.periodizationId
+  );
+  const validPRsCount = existingInPeriodization.filter((pr) => pr.isBaseline !== true).length;
   const isBaseline = validPRsCount < BASELINE_PR_COUNT;
 
   batch.set(newPRRef, {
@@ -144,7 +145,7 @@ export async function getLastPRForExercise(
 }
 
 /**
- * Busca todos os PRs de um exercício
+ * Busca todos os PRs de um exercício (todas as periodizações)
  */
 export async function getPRsForExercise(
   userId: string,
@@ -157,7 +158,6 @@ export async function getPRsForExercise(
     orderBy("date", "desc"),
   );
 
-  // Adiciona timestamp ao cache key para forçar atualização
   return getCollectionData<PRWithExerciseInfo>(
     `prs:${userId}:exercise:${exerciseId}:all:${Date.now()}`,
     {
@@ -167,12 +167,24 @@ export async function getPRsForExercise(
         return {
           id: docSnap.id,
           ...data,
-          // Garante que isBaseline seja preservado (pode ser undefined para PRs antigos)
           isBaseline: data.isBaseline === true,
         } as PRWithExerciseInfo;
       },
     },
   );
+}
+
+/**
+ * Busca os PRs de um exercício apenas na periodização informada.
+ * Usado para exibir só os PRs da periodização ativa (Base, Shock ou Deload).
+ */
+export async function getPRsForExerciseInPeriodization(
+  userId: string,
+  exerciseId: string,
+  periodizationId: string
+): Promise<PRWithExerciseInfo[]> {
+  const all = await getPRsForExercise(userId, exerciseId);
+  return all.filter((pr) => pr.periodizationId === periodizationId);
 }
 
 /**

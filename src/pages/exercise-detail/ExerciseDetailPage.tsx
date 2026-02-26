@@ -40,7 +40,7 @@ export function ExerciseDetailPage() {
 
     try {
       await deleteExercise(user.uid, exerciseId);
-      navigate("/treinos");
+      navigate("/exercicios");
     } catch (error) {
       console.error("Erro ao deletar exercício:", error);
     }

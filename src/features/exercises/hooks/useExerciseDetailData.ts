@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { useAuth } from "../../../contexts/AuthContext";
+import { getActivePeriodization } from "../../../services/periodizations.service";
 import { getExerciseById, type ExerciseRecord } from "../../../services/exercises.service";
-import { getPRsForExercise, calculatePRTrend } from "../../../services/prs.service";
+import { getPRsForExerciseInPeriodization, calculatePRTrend } from "../../../services/prs.service";
 import type { ExerciseSummary, ExercisePR } from "..";
 
 type UseExerciseDetailDataParams = {
@@ -28,15 +29,16 @@ export function useExerciseDetailData({ exerciseId }: UseExerciseDetailDataParam
       try {
         setLoading(true);
 
-        // Busca os dados do exercício
         const exerciseData = await getExerciseById<ExerciseRecord>(user.uid, exerciseId);
 
         if (!exerciseData) {
           throw new Error("Exercício não encontrado");
         }
 
-        // Busca os PRs do exercício
-        const allPRs = await getPRsForExercise(user.uid, exerciseId);
+        const activePeriodization = await getActivePeriodization(user.uid);
+        const allPRs = activePeriodization
+          ? await getPRsForExerciseInPeriodization(user.uid, exerciseId, activePeriodization.id)
+          : [];
         
         // Garante que o campo isBaseline seja tratado corretamente
         // PRs antigos sem o campo são considerados válidos (não baseline)

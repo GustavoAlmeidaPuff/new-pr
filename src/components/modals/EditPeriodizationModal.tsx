@@ -19,14 +19,14 @@ export function EditPeriodizationModal({
   periodization,
 }: EditPeriodizationModalProps) {
   const { user } = useAuth();
-  const [name, setName] = useState("");
-  const [durationDays, setDurationDays] = useState("90");
+  const [startDate, setStartDate] = useState("");
+  const [durationDays, setDurationDays] = useState("14");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (periodization) {
-      setName(periodization.name);
+      setStartDate(periodization.startDate || new Date().toISOString().split("T")[0]);
       setDurationDays(periodization.durationDays.toString());
     }
   }, [periodization]);
@@ -41,8 +41,9 @@ export function EditPeriodizationModal({
       return;
     }
 
-    if (!name.trim()) {
-      setError("Nome é obrigatório");
+    const days = parseInt(durationDays, 10);
+    if (Number.isNaN(days) || days < 1 || days > 365) {
+      setError("Duração deve ser entre 1 e 365 dias");
       return;
     }
 
@@ -51,8 +52,8 @@ export function EditPeriodizationModal({
 
     try {
       await updatePeriodization(user.uid, periodization.id, {
-        name: name.trim(),
-        durationDays: parseInt(durationDays, 10),
+        ...(startDate?.trim() && { startDate: startDate.trim() }),
+        durationDays: days,
       });
 
       onSuccess?.();
@@ -69,7 +70,9 @@ export function EditPeriodizationModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-md rounded-3xl bg-background-card p-6 shadow-xl">
         <header className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-white">Editar Periodização</h2>
+          <h2 className="text-2xl font-semibold text-white">
+            Duração — {periodization.name}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -81,17 +84,15 @@ export function EditPeriodizationModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium text-text-muted">
-              Nome da Periodização
+            <label htmlFor="startDate" className="mb-2 block text-sm font-medium text-text-muted">
+              Data de início
             </label>
             <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Base, Shock, Hipertrofia"
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-white placeholder-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              required
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -104,8 +105,8 @@ export function EditPeriodizationModal({
               type="number"
               value={durationDays}
               onChange={(e) => setDurationDays(e.target.value)}
-              min="1"
-              max="365"
+              min={1}
+              max={365}
               className="w-full rounded-xl border border-border bg-background px-4 py-3 text-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               required
             />

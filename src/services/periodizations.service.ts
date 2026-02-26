@@ -7,11 +7,22 @@ import {
   writeBatch,
   limit,
   where,
+  getDocs,
 } from "firebase/firestore";
 
 import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
 import { firestore } from "../config/firebase";
 import type { Periodization } from "../features/periodizations/types";
+
+/**
+ * IDs fixos das três periodizações (sempre existem, não se criam outras)
+ */
+export const PERIODIZATION_IDS = ["base", "shock", "deload"] as const;
+export const PERIODIZATION_NAMES: Record<(typeof PERIODIZATION_IDS)[number], string> = {
+  base: "Base",
+  shock: "Shock",
+  deload: "Deload",
+};
 
 /**
  * Retorna o caminho da coleção de periodizações do usuário
@@ -20,62 +31,56 @@ function getPeriodizationsPath(userId: string): string {
   return `users/${userId}/periodizations`;
 }
 
-export type CreatePeriodizationInput = {
-  userId: string;
-  name: string;
-  startDate: string;
-  durationDays: number;
-};
+const DEFAULT_DURATION_DAYS = 14;
+
+/**
+ * Garante que existem as 3 periodizações fixas (Base, Shock, Deload).
+ * Cria as que faltam com IDs fixos; se não houver nenhuma ativa, ativa Base.
+ */
+export async function ensureDefaultPeriodizations(userId: string): Promise<void> {
+  const periodizationsPath = getPeriodizationsPath(userId);
+  const coll = collection(firestore, periodizationsPath);
+  const snapshot = await getDocs(coll);
+  const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as { id: string; status?: string }));
+  const existingIds = new Set(list.map((p) => p.id));
+  const hasActive = list.some((p) => p.status === "active");
+  const today = new Date().toISOString().split("T")[0];
+
+  let hasWrites = false;
+  const batch = writeBatch(firestore);
+
+  for (const id of PERIODIZATION_IDS) {
+    if (existingIds.has(id)) continue;
+    hasWrites = true;
+    const isFirstAndNoActive = id === "base" && !hasActive;
+    const ref = doc(firestore, periodizationsPath, id);
+    batch.set(ref, {
+      name: PERIODIZATION_NAMES[id],
+      startDate: today,
+      durationDays: DEFAULT_DURATION_DAYS,
+      status: isFirstAndNoActive ? "active" : "upcoming",
+      prs: 0,
+      progressPercent: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  if (hasWrites) {
+    await batch.commit();
+  }
+
+  if (!hasActive) {
+    await activatePeriodization(userId, "base");
+  }
+}
 
 export type UpdatePeriodizationInput = {
   name?: string;
+  startDate?: string;
   durationDays?: number;
   status?: "active" | "completed" | "upcoming";
 };
-
-/**
- * Cria uma nova periodização e desativa todas as outras
- */
-export async function createPeriodization(input: CreatePeriodizationInput): Promise<string> {
-  const batch = writeBatch(firestore);
-  const periodizationsPath = getPeriodizationsPath(input.userId);
-
-  // Desativa todas as periodizações ativas do usuário
-  const activePeriodizations = await getCollectionData<{ ref: DocumentReference }>(
-    `periodizations:${input.userId}:active`,
-    {
-      queryFactory: () =>
-        query(collection(firestore, periodizationsPath), where("status", "==", "active")),
-      map: (docSnap) => ({
-        ref: docSnap.ref,
-      }),
-    },
-  );
-
-  activePeriodizations.forEach(({ ref }) => {
-    batch.update(ref, {
-      status: "completed",
-      completedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  });
-
-  // Cria a nova periodização
-  const newPeriodizationRef = doc(collection(firestore, periodizationsPath));
-  batch.set(newPeriodizationRef, {
-    name: input.name,
-    startDate: input.startDate,
-    durationDays: input.durationDays,
-    status: "active",
-    prs: 0,
-    progressPercent: 0,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  await batch.commit();
-  return newPeriodizationRef.id;
-}
 
 /**
  * Ativa uma periodização existente e desativa todas as outras

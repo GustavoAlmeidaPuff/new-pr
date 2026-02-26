@@ -9,11 +9,11 @@ Todos os dados do usuário estão organizados como **subcoleções** dentro do d
 ```
 users/{userId}/
   ├── periodizations/{periodizationId}
-  ├── workouts/{workoutId}
   ├── exercises/{exerciseId}
-  ├── prs/{prId}
-  └── workoutExercises/{workoutExerciseId}
+  └── prs/{prId}
 ```
+
+**Nota:** As coleções `workouts` e `workoutExercises` não são mais utilizadas pelo app (escopo simplificado: lista única de exercícios).
 
 ---
 
@@ -55,33 +55,7 @@ Subcoleção que armazena as periodizações de treino do usuário (Base, Shock,
 
 ---
 
-### 3. `users/{userId}/workouts/{workoutId}`
-
-Subcoleção que armazena os treinos criados pelo usuário (Treino A, B, C, etc.).
-
-**Campos:**
-- `name` (string): Nome do treino (ex: "Treino A - Upper")
-- `description` (string): Descrição do treino (ex: "Peito, Ombros, Tríceps")
-- `exerciseCount` (number): Contador de exercícios no treino
-- `createdAt` (timestamp): Data de criação
-- `updatedAt` (timestamp): Data da última atualização
-
----
-
-### 4. `users/{userId}/workoutExercises/{workoutExerciseId}`
-
-Subcoleção que relaciona exercícios a treinos (tabela intermediária muitos-para-muitos).
-
-**Campos:**
-- `workoutId` (string): ID do treino
-- `exerciseId` (string): ID do exercício
-- `order` (number): Ordem do exercício no treino (para permitir reordenação)
-- `createdAt` (timestamp): Data de criação
-- `updatedAt` (timestamp): Data da última atualização
-
----
-
-### 5. `users/{userId}/exercises/{exerciseId}`
+### 3. `users/{userId}/exercises/{exerciseId}`
 
 Subcoleção que armazena os exercícios criados pelo usuário.
 
@@ -95,7 +69,7 @@ Subcoleção que armazena os exercícios criados pelo usuário.
 
 ---
 
-### 6. `users/{userId}/prs/{prId}`
+### 4. `users/{userId}/prs/{prId}`
 
 Subcoleção que armazena os registros de PRs de cada exercício.
 
@@ -126,10 +100,6 @@ Subcoleção que armazena os registros de PRs de cada exercício.
 2. Cria novo documento em `prs` com o `periodizationId`
 3. Incrementa o contador `prs` da periodização
 4. Calcula estatísticas (volume, tendências, insights)
-
-### Adicionar Exercício ao Treino
-1. Cria documento em `workoutExercises` relacionando workout e exercise
-2. Incrementa `exerciseCount` do treino
 
 ---
 
@@ -163,13 +133,13 @@ query(
 // Filtra localmente por exerciseId
 ```
 
-### Lista de Treinos
+### Lista de Exercícios
 ```typescript
-// Busca treinos do usuário
-const workoutsPath = `users/${userId}/workouts`;
+// Busca exercícios do usuário (ordenados por nome)
+const exercisesPath = `users/${userId}/exercises`;
 query(
-  collection(firestore, workoutsPath),
-  orderBy("createdAt", "desc")
+  collection(firestore, exercisesPath),
+  orderBy("name", "asc")
 )
 ```
 
@@ -199,19 +169,11 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
       
-      match /workouts/{workoutId} {
-        allow read, write: if isOwner(userId);
-      }
-      
       match /exercises/{exerciseId} {
         allow read, write: if isOwner(userId);
       }
       
       match /prs/{prId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      match /workoutExercises/{workoutExerciseId} {
         allow read, write: if isOwner(userId);
       }
     }
