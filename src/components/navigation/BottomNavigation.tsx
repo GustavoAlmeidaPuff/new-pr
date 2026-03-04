@@ -1,4 +1,4 @@
-import { Dumbbell, Home, LineChart, Settings } from "lucide-react";
+import { Dumbbell, Home, LineChart, List, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 type NavItem = {
@@ -9,6 +9,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Home", to: "/", icon: Home },
+  { label: "Treinos", to: "/treinos", icon: List },
   { label: "Exercícios", to: "/exercicios", icon: Dumbbell },
   { label: "Períodos", to: "/periodizacoes", icon: LineChart },
   { label: "Config", to: "/config", icon: Settings },

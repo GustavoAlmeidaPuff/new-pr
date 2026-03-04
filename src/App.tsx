@@ -8,6 +8,8 @@ import { HomePage } from "./pages/home/HomePage";
 import { LoginPage } from "./pages/login/LoginPage";
 import { PeriodizationsPage } from "./pages/periodizations/PeriodizationsPage";
 import { ConfigPage } from "./pages/settings/ConfigPage";
+import { TreinoDetailPage } from "./pages/treinos/TreinoDetailPage";
+import { TreinosPage } from "./pages/treinos/TreinosPage";
 
 function App() {
   return (
@@ -18,8 +20,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/treinos" element={<Navigate to="/exercicios" replace />} />
-            <Route path="/treinos/:workoutId" element={<Navigate to="/exercicios" replace />} />
+            <Route path="/treinos" element={<TreinosPage />} />
+            <Route path="/treinos/:workoutId" element={<TreinoDetailPage />} />
             <Route path="/exercicios" element={<ExercisesPage />} />
             <Route path="/exercicios/:exerciseId" element={<ExerciseDetailPage />} />
             <Route path="/periodizacoes" element={<PeriodizationsPage />} />
