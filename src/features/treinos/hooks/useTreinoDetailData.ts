@@ -39,14 +39,16 @@ export function useTreinoDetailData(workoutId: string | undefined): UseTreinoDet
       return;
     }
 
+    const currentUser = user;
+    const currentWorkoutId = workoutId;
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       try {
         const [workoutData, weList] = await Promise.all([
-          getWorkoutById(user.uid, workoutId),
-          getWorkoutExerciseIds(user.uid, workoutId),
+          getWorkoutById(currentUser.uid, currentWorkoutId),
+          getWorkoutExerciseIds(currentUser.uid, currentWorkoutId),
         ]);
 
         if (cancelled) return;
@@ -54,7 +56,7 @@ export function useTreinoDetailData(workoutId: string | undefined): UseTreinoDet
 
         const withNames = await Promise.all(
           weList.map(async (we) => {
-            const ex = await getExerciseById(user.uid, we.exerciseId);
+            const ex = await getExerciseById(currentUser.uid, we.exerciseId);
             return {
               workoutExerciseId: we.id,
               exerciseId: we.exerciseId,
