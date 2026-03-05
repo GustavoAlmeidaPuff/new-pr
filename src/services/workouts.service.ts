@@ -23,6 +23,7 @@ function getWorkoutExercisesPath(userId: string): string {
 export type WorkoutRecord = {
   id: string;
   name: string;
+  order?: number;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -43,8 +44,11 @@ export type CreateWorkoutInput = {
 export async function createWorkout(input: CreateWorkoutInput): Promise<string> {
   const path = getWorkoutsPath(input.userId);
   const coll = collection(firestore, path);
+  const snapshot = await getDocs(coll);
+  const nextOrder = snapshot.size;
   const ref = await addDoc(coll, {
     name: input.name.trim(),
+    order: nextOrder,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -139,6 +143,35 @@ export async function removeExerciseFromWorkout(
   const snapshot = await getDocs(q);
   const batch = writeBatch(firestore);
   snapshot.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+}
+
+/** Reordena os treinos; orderedWorkoutIds é a lista de IDs na nova ordem. */
+export async function reorderWorkouts(
+  userId: string,
+  orderedWorkoutIds: string[]
+): Promise<void> {
+  const path = getWorkoutsPath(userId);
+  const batch = writeBatch(firestore);
+  orderedWorkoutIds.forEach((id, index) => {
+    const ref = doc(firestore, path, id);
+    batch.update(ref, { order: index, updatedAt: serverTimestamp() });
+  });
+  await batch.commit();
+}
+
+/** Reordena os exercícios do treino; orderedWorkoutExerciseIds são os IDs dos docs em workoutExercises. */
+export async function reorderWorkoutExercises(
+  userId: string,
+  _workoutId: string,
+  orderedWorkoutExerciseIds: string[]
+): Promise<void> {
+  const wePath = getWorkoutExercisesPath(userId);
+  const batch = writeBatch(firestore);
+  orderedWorkoutExerciseIds.forEach((id, index) => {
+    const ref = doc(firestore, wePath, id);
+    batch.update(ref, { order: index, updatedAt: serverTimestamp() });
+  });
   await batch.commit();
 }
 
