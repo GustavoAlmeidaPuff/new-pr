@@ -47,6 +47,37 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
     }
+
+    // Transferências de banco de exercícios entre usuários (compartilhamento por e-mail)
+    match /exerciseTransfers/{transferId} {
+      function isSender() {
+        return isAuthenticated() && request.auth.uid == resource.data.fromUid;
+      }
+      function isRecipient() {
+        return isAuthenticated()
+          && request.auth.token.email != null
+          && request.auth.token.email.lower() == resource.data.toEmail;
+      }
+
+      // Remetente cria a transferência apontando pra si mesmo como fromUid
+      allow create: if isAuthenticated()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.status == "pending"
+        && request.resource.data.toEmail is string
+        && request.resource.data.exercises is list;
+
+      // Tanto o remetente quanto o destinatário (pelo e-mail) podem ler
+      allow read: if isSender() || isRecipient();
+
+      // Destinatário atualiza o status (aceitar/recusar); remetente também pode cancelar
+      allow update: if (isRecipient() || isSender())
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toEmail == resource.data.toEmail
+        && request.resource.data.exercises == resource.data.exercises;
+
+      // Apenas o remetente pode deletar
+      allow delete: if isSender();
+    }
   }
 }
 
