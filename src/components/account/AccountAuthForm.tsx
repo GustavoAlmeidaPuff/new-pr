@@ -192,7 +192,7 @@ type AddAccountPageProps = {
 };
 
 export function AddAccountPanel({ onAuthenticated }: AddAccountPageProps) {
-  const { canAddAccount, resolveLoginSlot, user } = useAuth();
+  const { canAddAccount, resolveLoginSlot } = useAuth();
   const navigate = useNavigate();
   const targetSlot = resolveLoginSlot(1);
 
@@ -213,10 +213,6 @@ export function AddAccountPanel({ onAuthenticated }: AddAccountPageProps) {
       description="Entre com outra conta para alternar rapidamente entre perfis no mesmo celular."
       onSuccess={() => {
         onAuthenticated?.();
-        if (!user) {
-          navigate("/", { replace: true });
-          return;
-        }
         navigate("/config", { replace: true });
       }}
     />
