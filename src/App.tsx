@@ -8,6 +8,7 @@ import { HomePage } from "./pages/home/HomePage";
 import { LoginPage } from "./pages/login/LoginPage";
 import { PeriodizationsPage } from "./pages/periodizations/PeriodizationsPage";
 import { ConfigPage } from "./pages/settings/ConfigPage";
+import { AddAccountPage } from "./pages/accounts/AddAccountPage";
 import { TreinoDetailPage } from "./pages/treinos/TreinoDetailPage";
 import { TreinosPage } from "./pages/treinos/TreinosPage";
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/exercicios/:exerciseId" element={<ExerciseDetailPage />} />
             <Route path="/periodizacoes" element={<PeriodizationsPage />} />
             <Route path="/config" element={<ConfigPage />} />
+            <Route path="/contas/adicionar" element={<AddAccountPage />} />
           </Route>
         </Route>
       </Routes>
