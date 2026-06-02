@@ -1,6 +1,8 @@
 import type { User } from "firebase/auth";
 import {
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithRedirect,
   signInWithPopup,
   getRedirectResult,
@@ -24,6 +26,8 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -145,6 +149,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const signUpWithEmail = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
+
   const signOut = async () => {
     await firebaseSignOut(auth);
   };
@@ -154,6 +166,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       loading,
       signInWithGoogle,
+      signUpWithEmail,
+      signInWithEmail,
       signOut,
     }),
     [loading, user],
