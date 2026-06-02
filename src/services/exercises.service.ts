@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDocs,
   query,
   serverTimestamp,
   writeBatch,
@@ -129,6 +130,72 @@ export async function searchExercisesByName(
   // Filtra localmente por causa das limitações do Firestore
   const normalizedSearch = searchTerm.toLowerCase().trim();
   return exercises.filter((ex) => ex.name.toLowerCase().includes(normalizedSearch));
+}
+
+/**
+ * Lista todos os exercícios do usuário (sem cache, leitura direta).
+ * Usado em fluxos pontuais como exportação/transferência.
+ */
+export async function listAllExercises(userId: string): Promise<ExerciseRecord[]> {
+  const exercisesPath = getExercisesPath(userId);
+  const snapshot = await getDocs(
+    query(collection(firestore, exercisesPath), orderBy("name"))
+  );
+  return snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      name: data.name,
+      muscleGroup: data.muscleGroup,
+      muscles: data.muscles,
+      notes: data.notes,
+      weightType: data.weightType,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    } as ExerciseRecord;
+  });
+}
+
+/**
+ * Cria múltiplos exercícios em um único batch, pulando aqueles cujo nome (case-insensitive)
+ * já existe na coleção do usuário. Retorna a quantidade efetivamente importada.
+ */
+export async function importExercises(
+  userId: string,
+  exercises: Array<Omit<ExerciseRecord, "id" | "createdAt" | "updatedAt">>
+): Promise<{ imported: number; skipped: number }> {
+  const exercisesPath = getExercisesPath(userId);
+  const existing = await listAllExercises(userId);
+  const existingNames = new Set(existing.map((ex) => ex.name.trim().toLowerCase()));
+
+  const batch = writeBatch(firestore);
+  let imported = 0;
+  let skipped = 0;
+
+  for (const ex of exercises) {
+    const normalized = ex.name.trim().toLowerCase();
+    if (existingNames.has(normalized)) {
+      skipped += 1;
+      continue;
+    }
+    existingNames.add(normalized);
+    const newRef = doc(collection(firestore, exercisesPath));
+    batch.set(newRef, {
+      name: ex.name,
+      muscleGroup: ex.muscleGroup,
+      muscles: ex.muscles ?? [ex.muscleGroup],
+      notes: ex.notes ?? "",
+      weightType: ex.weightType ?? "total",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    imported += 1;
+  }
+
+  if (imported > 0) {
+    await batch.commit();
+  }
+  return { imported, skipped };
 }
 
 export async function getExerciseById<T = ExerciseRecord>(
