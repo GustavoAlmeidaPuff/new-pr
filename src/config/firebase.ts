@@ -19,13 +19,18 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-5T0V79PNM5",
 };
 
-// Inicializa o Firebase
+// Inicializa o Firebase (duas instâncias para manter duas contas logadas no mesmo aparelho)
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const secondaryApp = initializeApp(firebaseConfig, "account-secondary");
 
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Falha ao configurar persistência do Firebase Auth", error);
-});
+const auth = getAuth(app);
+const secondaryAuth = getAuth(secondaryApp);
+
+for (const authInstance of [auth, secondaryAuth]) {
+  setPersistence(authInstance, browserLocalPersistence).catch((error) => {
+    console.error("Falha ao configurar persistência do Firebase Auth", error);
+  });
+}
 
 const firestore = getFirestore(app);
 // Especifica a região das Functions (us-central1 é o padrão)
@@ -37,4 +42,4 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true
   connectFunctionsEmulator(functions, "localhost", 5001);
 }
 
-export { app, auth, firestore, functions, googleProvider };
+export { app, secondaryApp, auth, secondaryAuth, firestore, functions, googleProvider };
