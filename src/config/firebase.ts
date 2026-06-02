@@ -23,10 +23,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const secondaryApp = initializeApp(firebaseConfig, "account-secondary");
 
-const auth = getAuth(app);
+const primaryAuth = getAuth(app);
 const secondaryAuth = getAuth(secondaryApp);
 
-for (const authInstance of [auth, secondaryAuth]) {
+for (const authInstance of [primaryAuth, secondaryAuth]) {
   setPersistence(authInstance, browserLocalPersistence).catch((error) => {
     console.error("Falha ao configurar persistência do Firebase Auth", error);
   });
@@ -42,4 +42,4 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true
   connectFunctionsEmulator(functions, "localhost", 5001);
 }
 
-export { app, secondaryApp, auth, secondaryAuth, firestore, functions, googleProvider };
+export { app, secondaryApp, primaryAuth, secondaryAuth, firestore, functions, googleProvider };
