@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -19,16 +20,33 @@ import {
 } from "react";
 import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
-import { getDocumentData } from "../cache/firestoreCache";
-import { auth, firestore, googleProvider } from "../config/firebase";
+import { clearFirestoreCache, getDocumentData } from "../cache/firestoreCache";
+import { firestore, googleProvider } from "../config/firebase";
+import {
+  type AccountSlot,
+  type AccountSummary,
+  getAuthForSlot,
+  getFirstEmptySlot,
+  getStoredActiveSlot,
+  setStoredActiveSlot,
+  toAccountSummary,
+} from "../lib/accountSlots";
+
+type SlotUsers = [User | null, User | null];
 
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  activeSlot: AccountSlot;
+  accounts: AccountSummary[];
+  hasMultipleAccounts: boolean;
+  canAddAccount: boolean;
+  switchAccount: (slot: AccountSlot) => void;
+  signInWithGoogle: (slot?: AccountSlot) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, slot?: AccountSlot) => Promise<void>;
+  signInWithEmail: (email: string, password: string, slot?: AccountSlot) => Promise<void>;
+  signOut: (slot?: AccountSlot) => Promise<void>;
+  resolveLoginSlot: (preferredSlot?: AccountSlot) => AccountSlot;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -37,85 +55,132 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
+async function syncUserToFirestore(currentUser: User) {
+  const userRef = doc(firestore, "users", currentUser.uid);
+
+  const userData = await getDocumentData<Record<string, unknown> | null>(
+    `users:${currentUser.uid}`,
+    {
+      refFactory: () => userRef,
+      map: (snapshot) => {
+        if (!snapshot || !snapshot.exists()) {
+          return null;
+        }
+        return snapshot.data() as Record<string, unknown>;
+      },
+    },
+  );
+
+  if (userData) {
+    await updateDoc(userRef, {
+      displayName: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL,
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    await setDoc(userRef, {
+      displayName: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
+function getOtherSlot(slot: AccountSlot): AccountSlot {
+  return slot === 0 ? 1 : 0;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [slotUsers, setSlotUsers] = useState<SlotUsers>([null, null]);
+  const [activeSlot, setActiveSlot] = useState<AccountSlot>(() => getStoredActiveSlot());
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
   const redirectResultCheckedRef = useRef(false);
+  const slotUsersRef = useRef<SlotUsers>([null, null]);
+  const activeSlotRef = useRef<AccountSlot>(activeSlot);
+
+  useEffect(() => {
+    slotUsersRef.current = slotUsers;
+  }, [slotUsers]);
+
+  useEffect(() => {
+    activeSlotRef.current = activeSlot;
+  }, [activeSlot]);
+
+  const ensureUniqueAccount = useCallback(async (slot: AccountSlot, newUser: User) => {
+    const otherSlot = getOtherSlot(slot);
+    const otherUser = slotUsersRef.current[otherSlot] ?? getAuthForSlot(otherSlot).currentUser;
+
+    if (otherUser?.uid === newUser.uid) {
+      await firebaseSignOut(getAuthForSlot(slot));
+      throw new Error("Esta conta já está adicionada neste aparelho.");
+    }
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
-    let authUnsubscribe: (() => void) | null = null;
+    const slotReady = [false, false];
+    const unsubscribes: Array<() => void> = [];
+
+    const markReady = () => {
+      if (slotReady[0] && slotReady[1] && mountedRef.current) {
+        setLoading(false);
+      }
+    };
 
     const initialize = async () => {
-      // IMPORTANTE: getRedirectResult só pode ser chamado UMA VEZ e ANTES de configurar listeners
       if (!redirectResultCheckedRef.current) {
         redirectResultCheckedRef.current = true;
-        
+
         try {
-          console.log("[AUTH] Verificando resultado do redirect...");
-          const result = await getRedirectResult(auth);
-          if (result && mountedRef.current) {
-            console.log("[AUTH] ✅ Login via redirect bem-sucedido:", result.user.email);
-            // O usuário já está autenticado, o onAuthStateChanged vai detectar
-          } else {
-            console.log("[AUTH] ℹ️  Nenhum redirect pendente (acesso normal)");
+          const result = await getRedirectResult(getAuthForSlot(0));
+          if (result?.user && mountedRef.current) {
+            await ensureUniqueAccount(0, result.user);
           }
         } catch (error) {
-          console.error("[AUTH] ❌ Erro no redirect:", error);
+          console.error("[AUTH] Erro no redirect:", error);
         }
       }
 
-      // Agora configura o listener de autenticação
-      authUnsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        if (!mountedRef.current) return;
+      ([0, 1] as AccountSlot[]).forEach((slot) => {
+        const authInstance = getAuthForSlot(slot);
+        const unsubscribe = onAuthStateChanged(authInstance, async (currentUser) => {
+          if (!mountedRef.current) return;
 
-        console.log("[AUTH] 🔄 onAuthStateChanged disparado. User:", currentUser?.email || "null");
+          setSlotUsers((previous) => {
+            const next: SlotUsers = [...previous] as SlotUsers;
+            next[slot] = currentUser;
+            return next;
+          });
 
-        setUser(currentUser);
-        setLoading(false);
-
-        if (currentUser) {
-          console.log("[AUTH] 👤 Usuário autenticado, atualizando Firestore...");
-          const userRef = doc(firestore, "users", currentUser.uid);
-          
-          try {
-            const userData = await getDocumentData<Record<string, unknown> | null>(
-              `users:${currentUser.uid}`,
-              {
-                refFactory: () => userRef,
-                map: (snapshot) => {
-                  if (!snapshot || !snapshot.exists()) {
-                    return null;
-                  }
-                  return snapshot.data() as Record<string, unknown>;
-                },
-              },
-            );
-
-            if (userData) {
-              await updateDoc(userRef, {
-                displayName: currentUser.displayName,
-                email: currentUser.email,
-                photoURL: currentUser.photoURL,
-                updatedAt: serverTimestamp(),
-              });
-            } else {
-              await setDoc(userRef, {
-                displayName: currentUser.displayName,
-                email: currentUser.email,
-                photoURL: currentUser.photoURL,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-              });
+          if (currentUser) {
+            try {
+              await syncUserToFirestore(currentUser);
+            } catch (error) {
+              console.error("[AUTH] Erro ao salvar dados no Firestore:", error);
             }
-            console.log("[AUTH] ✅ Dados do usuário salvos no Firestore");
-          } catch (error) {
-            console.error("[AUTH] ❌ Erro ao salvar dados no Firestore:", error);
+          } else if (slot === activeSlotRef.current) {
+            const otherSlot = getOtherSlot(slot);
+            const otherUser =
+              slotUsersRef.current[otherSlot] ?? getAuthForSlot(otherSlot).currentUser;
+
+            if (otherUser) {
+              clearFirestoreCache();
+              setActiveSlot(otherSlot);
+              setStoredActiveSlot(otherSlot);
+            }
           }
-        } else {
-          console.log("[AUTH] ⚠️  Usuário não autenticado");
-        }
+
+          if (!slotReady[slot]) {
+            slotReady[slot] = true;
+            markReady();
+          }
+        });
+
+        unsubscribes.push(unsubscribe);
       });
     };
 
@@ -123,54 +188,124 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mountedRef.current = false;
-      if (authUnsubscribe) {
-        authUnsubscribe();
-      }
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, []);
+  }, [ensureUniqueAccount]);
 
-  const signInWithGoogle = async () => {
-    try {
-      console.log("[AUTH] 🚀 Iniciando login com Google via popup...");
-      
-      // Tenta usar popup primeiro (mais confiável)
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("[AUTH] ✅ Login via popup bem-sucedido:", result.user.email);
-    } catch (error: any) {
-      console.error("[AUTH] ❌ Erro no popup:", error);
-      
-      // Se popup falhar (bloqueado), tenta redirect como fallback
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        console.log("[AUTH] 🔄 Popup bloqueado, tentando redirect...");
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        throw error;
+  useEffect(() => {
+    if (!slotUsers[activeSlot] && slotUsers[getOtherSlot(activeSlot)]) {
+      const fallbackSlot = getOtherSlot(activeSlot);
+      setActiveSlot(fallbackSlot);
+      setStoredActiveSlot(fallbackSlot);
+    }
+  }, [activeSlot, slotUsers]);
+
+  const accounts = useMemo(
+    () =>
+      ([0, 1] as AccountSlot[])
+        .map((slot) => {
+          const accountUser = slotUsers[slot];
+          return accountUser ? toAccountSummary(slot, accountUser) : null;
+        })
+        .filter((account): account is AccountSummary => account !== null),
+    [slotUsers],
+  );
+
+  const user = slotUsers[activeSlot];
+  const hasMultipleAccounts = accounts.length > 1;
+  const canAddAccount = accounts.length < 2;
+
+  const switchAccount = useCallback(
+    (slot: AccountSlot) => {
+      if (!slotUsers[slot] || slot === activeSlot) {
+        return;
       }
+
+      clearFirestoreCache();
+      setActiveSlot(slot);
+      setStoredActiveSlot(slot);
+    },
+    [activeSlot, slotUsers],
+  );
+
+  const resolveLoginSlot = useCallback(
+    (preferredSlot?: AccountSlot): AccountSlot => {
+      if (preferredSlot !== undefined && !slotUsers[preferredSlot]) {
+        return preferredSlot;
+      }
+
+      return getFirstEmptySlot(slotUsers) ?? 0;
+    },
+    [slotUsers],
+  );
+
+  const signInWithGoogle = async (slot?: AccountSlot) => {
+    const targetSlot = resolveLoginSlot(slot);
+    const authInstance = getAuthForSlot(targetSlot);
+
+    try {
+      const result = await signInWithPopup(authInstance, googleProvider);
+      await ensureUniqueAccount(targetSlot, result.user);
+    } catch (error: unknown) {
+      const firebaseError = error as { code?: string };
+
+      if (
+        firebaseError.code === "auth/popup-blocked" ||
+        firebaseError.code === "auth/popup-closed-by-user"
+      ) {
+        await signInWithRedirect(authInstance, googleProvider);
+        return;
+      }
+
+      throw error;
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const signUpWithEmail = async (email: string, password: string, slot?: AccountSlot) => {
+    const targetSlot = resolveLoginSlot(slot);
+    const authInstance = getAuthForSlot(targetSlot);
+    const result = await createUserWithEmailAndPassword(authInstance, email, password);
+    await ensureUniqueAccount(targetSlot, result.user);
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+  const signInWithEmail = async (email: string, password: string, slot?: AccountSlot) => {
+    const targetSlot = resolveLoginSlot(slot);
+    const authInstance = getAuthForSlot(targetSlot);
+    const result = await signInWithEmailAndPassword(authInstance, email, password);
+    await ensureUniqueAccount(targetSlot, result.user);
   };
 
-  const signOut = async () => {
-    await firebaseSignOut(auth);
+  const signOut = async (slot?: AccountSlot) => {
+    const targetSlot = slot ?? activeSlotRef.current;
+    clearFirestoreCache();
+    await firebaseSignOut(getAuthForSlot(targetSlot));
   };
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       loading,
+      activeSlot,
+      accounts,
+      hasMultipleAccounts,
+      canAddAccount,
+      switchAccount,
       signInWithGoogle,
       signUpWithEmail,
       signInWithEmail,
       signOut,
+      resolveLoginSlot,
     }),
-    [loading, user],
+    [
+      accounts,
+      activeSlot,
+      canAddAccount,
+      hasMultipleAccounts,
+      loading,
+      resolveLoginSlot,
+      switchAccount,
+      user,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -183,4 +318,3 @@ export function useAuth() {
   }
   return context;
 }
-
