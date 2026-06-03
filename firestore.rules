@@ -50,33 +50,32 @@ service cloud.firestore {
 
     // Transferências de banco de exercícios entre usuários (compartilhamento por e-mail)
     match /exerciseTransfers/{transferId} {
-      function isSender() {
-        return isAuthenticated() && request.auth.uid == resource.data.fromUid;
-      }
-      function isRecipient() {
-        return isAuthenticated()
-          && request.auth.token.email != null
-          && request.auth.token.email.lower() == resource.data.toEmail;
-      }
-
-      // Remetente cria a transferência apontando pra si mesmo como fromUid
+      // Remetente cria a transferência apontando pra si mesmo como fromUid.
+      // O e-mail do destinatário precisa vir em minúsculas (normalizado no cliente).
       allow create: if isAuthenticated()
         && request.resource.data.fromUid == request.auth.uid
         && request.resource.data.status == "pending"
         && request.resource.data.toEmail is string
         && request.resource.data.exercises is list;
 
-      // Tanto o remetente quanto o destinatário (pelo e-mail) podem ler
-      allow read: if isSender() || isRecipient();
+      // Leitura: remetente (por uid) ou destinatário (por e-mail do token, comparação direta).
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.fromUid
+        || request.auth.token.email == resource.data.toEmail
+      );
 
-      // Destinatário atualiza o status (aceitar/recusar); remetente também pode cancelar
-      allow update: if (isRecipient() || isSender())
+      // Update: destinatário muda status (aceitar/recusar) ou remetente cancela.
+      allow update: if isAuthenticated()
+        && (
+          request.auth.uid == resource.data.fromUid
+          || request.auth.token.email == resource.data.toEmail
+        )
         && request.resource.data.fromUid == resource.data.fromUid
         && request.resource.data.toEmail == resource.data.toEmail
         && request.resource.data.exercises == resource.data.exercises;
 
-      // Apenas o remetente pode deletar
-      allow delete: if isSender();
+      // Apenas o remetente pode deletar.
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.fromUid;
     }
   }
 }
