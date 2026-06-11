@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 
 import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 /**
  * Retorna o caminho da coleção de exercícios do usuário
@@ -40,8 +40,8 @@ export type UpdateExerciseInput = {
  */
 export async function createExercise(input: CreateExerciseInput): Promise<string> {
   const exercisesPath = getExercisesPath(input.userId);
-  const newExerciseRef = doc(collection(firestore, exercisesPath));
-  const batch = writeBatch(firestore);
+  const newExerciseRef = doc(collection(getActiveFirestore(), exercisesPath));
+  const batch = writeBatch(getActiveFirestore());
 
   batch.set(newExerciseRef, {
     name: input.name,
@@ -66,8 +66,8 @@ export async function updateExercise(
   input: UpdateExerciseInput
 ): Promise<void> {
   const exercisesPath = getExercisesPath(userId);
-  const exerciseRef = doc(firestore, exercisesPath, exerciseId);
-  const batch = writeBatch(firestore);
+  const exerciseRef = doc(getActiveFirestore(), exercisesPath, exerciseId);
+  const batch = writeBatch(getActiveFirestore());
 
   batch.update(exerciseRef, {
     ...input,
@@ -82,8 +82,8 @@ export async function updateExercise(
  */
 export async function deleteExercise(userId: string, exerciseId: string): Promise<void> {
   const exercisesPath = getExercisesPath(userId);
-  const exerciseRef = doc(firestore, exercisesPath, exerciseId);
-  const batch = writeBatch(firestore);
+  const exerciseRef = doc(getActiveFirestore(), exercisesPath, exerciseId);
+  const batch = writeBatch(getActiveFirestore());
   batch.delete(exerciseRef);
   await batch.commit();
 }
@@ -109,7 +109,7 @@ export async function searchExercisesByName(
   const exercisesPath = getExercisesPath(userId);
   // Adiciona timestamp ao cache key para forçar atualização
   const cacheKey = `exercises:${userId}:all:${Date.now()}`;
-  const queryFactory = () => query(collection(firestore, exercisesPath), orderBy("name"));
+  const queryFactory = () => query(collection(getActiveFirestore(), exercisesPath), orderBy("name"));
 
   const exercises = await getCollectionData<{ id: string; name: string; muscleGroup: string; weightType?: "total" | "per-side" }>(
     cacheKey,
@@ -139,7 +139,7 @@ export async function searchExercisesByName(
 export async function listAllExercises(userId: string): Promise<ExerciseRecord[]> {
   const exercisesPath = getExercisesPath(userId);
   const snapshot = await getDocs(
-    query(collection(firestore, exercisesPath), orderBy("name"))
+    query(collection(getActiveFirestore(), exercisesPath), orderBy("name"))
   );
   return snapshot.docs.map((docSnap) => {
     const data = docSnap.data();
@@ -168,7 +168,7 @@ export async function importExercises(
   const existing = await listAllExercises(userId);
   const existingNames = new Set(existing.map((ex) => ex.name.trim().toLowerCase()));
 
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   let imported = 0;
   let skipped = 0;
 
@@ -179,7 +179,7 @@ export async function importExercises(
       continue;
     }
     existingNames.add(normalized);
-    const newRef = doc(collection(firestore, exercisesPath));
+    const newRef = doc(collection(getActiveFirestore(), exercisesPath));
     batch.set(newRef, {
       name: ex.name,
       muscleGroup: ex.muscleGroup,
@@ -206,7 +206,7 @@ export async function getExerciseById<T = ExerciseRecord>(
   const exercisesPath = getExercisesPath(userId);
 
   return getDocumentData<T | null>(`exercise:${userId}:${exerciseId}`, {
-    refFactory: () => doc(firestore, exercisesPath, exerciseId),
+    refFactory: () => doc(getActiveFirestore(), exercisesPath, exerciseId),
     map: (snapshot) => {
       if (!snapshot || !snapshot.exists()) {
         return null;
