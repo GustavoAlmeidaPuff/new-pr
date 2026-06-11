@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 
 import { getDocumentData } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 function getWorkoutsPath(userId: string): string {
   return `users/${userId}/workouts`;
@@ -43,7 +43,7 @@ export type CreateWorkoutInput = {
 
 export async function createWorkout(input: CreateWorkoutInput): Promise<string> {
   const path = getWorkoutsPath(input.userId);
-  const coll = collection(firestore, path);
+  const coll = collection(getActiveFirestore(), path);
   const snapshot = await getDocs(coll);
   const nextOrder = snapshot.size;
   const ref = await addDoc(coll, {
@@ -61,7 +61,7 @@ export async function getWorkoutById(
 ): Promise<WorkoutRecord | null> {
   const path = getWorkoutsPath(userId);
   return getDocumentData<WorkoutRecord | null>(`workout:${userId}:${workoutId}`, {
-    refFactory: () => doc(firestore, path, workoutId),
+    refFactory: () => doc(getActiveFirestore(), path, workoutId),
     map: (snapshot) => {
       if (!snapshot?.exists()) return null;
       return { id: snapshot.id, ...snapshot.data() } as WorkoutRecord;
@@ -75,8 +75,8 @@ export async function updateWorkout(
   data: { name: string }
 ): Promise<void> {
   const path = getWorkoutsPath(userId);
-  const ref = doc(firestore, path, workoutId);
-  const batch = writeBatch(firestore);
+  const ref = doc(getActiveFirestore(), path, workoutId);
+  const batch = writeBatch(getActiveFirestore());
   batch.update(ref, {
     name: data.name.trim(),
     updatedAt: serverTimestamp(),
@@ -87,14 +87,14 @@ export async function updateWorkout(
 export async function deleteWorkout(userId: string, workoutId: string): Promise<void> {
   const wePath = getWorkoutExercisesPath(userId);
   const weQuery = query(
-    collection(firestore, wePath),
+    collection(getActiveFirestore(), wePath),
     where("workoutId", "==", workoutId)
   );
   const snapshot = await getDocs(weQuery);
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   snapshot.docs.forEach((d) => batch.delete(d.ref));
   const wPath = getWorkoutsPath(userId);
-  batch.delete(doc(firestore, wPath, workoutId));
+  batch.delete(doc(getActiveFirestore(), wPath, workoutId));
   await batch.commit();
 }
 
@@ -105,7 +105,7 @@ export async function addExerciseToWorkout(
 ): Promise<void> {
   const wePath = getWorkoutExercisesPath(userId);
   const existing = query(
-    collection(firestore, wePath),
+    collection(getActiveFirestore(), wePath),
     where("workoutId", "==", workoutId),
     where("exerciseId", "==", exerciseId)
   );
@@ -114,13 +114,13 @@ export async function addExerciseToWorkout(
 
   const allInWorkout = await getDocs(
     query(
-      collection(firestore, wePath),
+      collection(getActiveFirestore(), wePath),
       where("workoutId", "==", workoutId)
     )
   );
   const nextOrder = allInWorkout.size;
 
-  await addDoc(collection(firestore, wePath), {
+  await addDoc(collection(getActiveFirestore(), wePath), {
     workoutId,
     exerciseId,
     order: nextOrder,
@@ -136,12 +136,12 @@ export async function removeExerciseFromWorkout(
 ): Promise<void> {
   const wePath = getWorkoutExercisesPath(userId);
   const q = query(
-    collection(firestore, wePath),
+    collection(getActiveFirestore(), wePath),
     where("workoutId", "==", workoutId),
     where("exerciseId", "==", exerciseId)
   );
   const snapshot = await getDocs(q);
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   snapshot.docs.forEach((d) => batch.delete(d.ref));
   await batch.commit();
 }
@@ -152,9 +152,9 @@ export async function reorderWorkouts(
   orderedWorkoutIds: string[]
 ): Promise<void> {
   const path = getWorkoutsPath(userId);
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   orderedWorkoutIds.forEach((id, index) => {
-    const ref = doc(firestore, path, id);
+    const ref = doc(getActiveFirestore(), path, id);
     batch.update(ref, { order: index, updatedAt: serverTimestamp() });
   });
   await batch.commit();
@@ -167,9 +167,9 @@ export async function reorderWorkoutExercises(
   orderedWorkoutExerciseIds: string[]
 ): Promise<void> {
   const wePath = getWorkoutExercisesPath(userId);
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   orderedWorkoutExerciseIds.forEach((id, index) => {
-    const ref = doc(firestore, wePath, id);
+    const ref = doc(getActiveFirestore(), wePath, id);
     batch.update(ref, { order: index, updatedAt: serverTimestamp() });
   });
   await batch.commit();
@@ -181,7 +181,7 @@ export async function getWorkoutExerciseIds(
 ): Promise<Array<{ id: string; exerciseId: string; order: number }>> {
   const wePath = getWorkoutExercisesPath(userId);
   const q = query(
-    collection(firestore, wePath),
+    collection(getActiveFirestore(), wePath),
     where("workoutId", "==", workoutId)
   );
   const snapshot = await getDocs(q);
@@ -204,7 +204,7 @@ export async function getWorkoutIdsContainingExercise(
 ): Promise<string[]> {
   const wePath = getWorkoutExercisesPath(userId);
   const q = query(
-    collection(firestore, wePath),
+    collection(getActiveFirestore(), wePath),
     where("exerciseId", "==", exerciseId)
   );
   const snapshot = await getDocs(q);
