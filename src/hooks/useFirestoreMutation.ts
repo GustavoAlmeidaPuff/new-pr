@@ -11,7 +11,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 type MutationStatus = "idle" | "loading" | "success" | "error";
 
@@ -36,7 +36,7 @@ export function useFirestoreMutation<T = unknown>() {
       setError(null);
 
       try {
-        const ref = collection(firestore, path);
+        const ref = collection(getActiveFirestore(), path);
         const payload = {
           ...data,
           createdAt: serverTimestamp(),
@@ -64,7 +64,7 @@ export function useFirestoreMutation<T = unknown>() {
       setError(null);
 
       try {
-        const ref = doc(firestore, path, docId);
+        const ref = doc(getActiveFirestore(), path, docId);
         await setDoc(
           ref,
           {
@@ -93,7 +93,7 @@ export function useFirestoreMutation<T = unknown>() {
       setError(null);
 
       try {
-        const ref = doc(firestore, path, docId);
+        const ref = doc(getActiveFirestore(), path, docId);
         await updateDoc(ref, {
           ...data,
           updatedAt: serverTimestamp(),
@@ -117,7 +117,7 @@ export function useFirestoreMutation<T = unknown>() {
     setError(null);
 
     try {
-      const ref = doc(firestore, path, docId);
+      const ref = doc(getActiveFirestore(), path, docId);
       await deleteDoc(ref);
       setStatus("success");
     } catch (err) {
