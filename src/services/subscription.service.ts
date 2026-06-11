@@ -1,6 +1,6 @@
 import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { getDocumentData } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 export type SubscriptionStatus = "active" | "canceled" | "past_due" | "incomplete" | "trialing" | "unpaid" | null;
 
@@ -20,7 +20,7 @@ export type SubscriptionData = {
 export async function getSubscriptionData(
   userId: string
 ): Promise<SubscriptionData | null> {
-  const subscriptionRef = doc(firestore, "users", userId, "subscription", "current");
+  const subscriptionRef = doc(getActiveFirestore(), "users", userId, "subscription", "current");
 
   return getDocumentData<SubscriptionData | null>(
     `subscription:${userId}`,
@@ -53,7 +53,7 @@ export async function updateSubscriptionData(
   userId: string,
   data: Partial<SubscriptionData>
 ): Promise<void> {
-  const subscriptionRef = doc(firestore, "users", userId, "subscription", "current");
+  const subscriptionRef = doc(getActiveFirestore(), "users", userId, "subscription", "current");
   const subscriptionData = await getDocumentData<SubscriptionData | null>(
     `subscription:${userId}`,
     {
