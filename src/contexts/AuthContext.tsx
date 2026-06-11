@@ -21,7 +21,7 @@ import {
 import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 import { clearFirestoreCache, getDocumentData } from "../cache/firestoreCache";
-import { firestore, googleProvider } from "../config/firebase";
+import { getFirestoreForSlot, googleProvider } from "../config/firebase";
 import {
   type AccountSlot,
   type AccountSummary,
@@ -55,7 +55,8 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
-async function syncUserToFirestore(currentUser: User) {
+async function syncUserToFirestore(currentUser: User, slot: AccountSlot) {
+  const firestore = getFirestoreForSlot(slot);
   const userRef = doc(firestore, "users", currentUser.uid);
 
   const userData = await getDocumentData<Record<string, unknown> | null>(
@@ -158,7 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (currentUser) {
             try {
-              await syncUserToFirestore(currentUser);
+              await syncUserToFirestore(currentUser, slot);
             } catch (error) {
               console.error("[AUTH] Erro ao salvar dados no Firestore:", error);
             }
@@ -168,9 +169,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               slotUsersRef.current[otherSlot] ?? getAuthForSlot(otherSlot).currentUser;
 
             if (otherUser) {
+              // localStorage primeiro: getActiveFirestore() lê dali, então precisa estar atualizado
+              // antes do React re-renderizar e disparar novas queries.
+              setStoredActiveSlot(otherSlot);
               clearFirestoreCache();
               setActiveSlot(otherSlot);
-              setStoredActiveSlot(otherSlot);
             }
           }
 
@@ -195,8 +198,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!slotUsers[activeSlot] && slotUsers[getOtherSlot(activeSlot)]) {
       const fallbackSlot = getOtherSlot(activeSlot);
-      setActiveSlot(fallbackSlot);
       setStoredActiveSlot(fallbackSlot);
+      clearFirestoreCache();
+      setActiveSlot(fallbackSlot);
     }
   }, [activeSlot, slotUsers]);
 
@@ -221,9 +225,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
+      setStoredActiveSlot(slot);
       clearFirestoreCache();
       setActiveSlot(slot);
-      setStoredActiveSlot(slot);
     },
     [activeSlot, slotUsers],
   );
