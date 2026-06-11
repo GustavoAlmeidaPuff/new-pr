@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 
 import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 import { incrementPeriodizationPRs } from "./periodizations.service";
 
 /**
@@ -56,12 +56,12 @@ const BASELINE_PR_COUNT = 3;
  */
 export async function createPR(input: CreatePRInput): Promise<string> {
   const prsPath = getPRsPath(input.userId);
-  const newPRRef = doc(collection(firestore, prsPath));
-  const batch = writeBatch(firestore);
+  const newPRRef = doc(collection(getActiveFirestore(), prsPath));
+  const batch = writeBatch(getActiveFirestore());
 
   // Busca o exercício para saber o tipo de carga
   const exercisesPath = `users/${input.userId}/exercises`;
-  const exerciseRef = doc(firestore, exercisesPath, input.exerciseId);
+  const exerciseRef = doc(getActiveFirestore(), exercisesPath, input.exerciseId);
   const exerciseData = await getDocumentData<{ weightType?: "total" | "per-side" } | null>(
     `exercise:${input.userId}:${input.exerciseId}`,
     {
@@ -133,7 +133,7 @@ export async function getLastPRsForExerciseIds(
   for (let i = 0; i < exerciseIds.length; i += MAX_IN_QUERY) {
     const chunk = exerciseIds.slice(i, i + MAX_IN_QUERY);
     const q = query(
-      collection(firestore, prsPath),
+      collection(getActiveFirestore(), prsPath),
       where("exerciseId", "in", chunk),
     );
 
@@ -168,7 +168,7 @@ export async function getLastPRForExercise(
 ): Promise<PRWithExerciseInfo | null> {
   const prsPath = getPRsPath(userId);
   const q = query(
-    collection(firestore, prsPath),
+    collection(getActiveFirestore(), prsPath),
     where("exerciseId", "==", exerciseId),
     orderBy("date", "desc"),
     limit(1),
@@ -200,7 +200,7 @@ export async function getPRsForExercise(
 ): Promise<PRWithExerciseInfo[]> {
   const prsPath = getPRsPath(userId);
   const q = query(
-    collection(firestore, prsPath),
+    collection(getActiveFirestore(), prsPath),
     where("exerciseId", "==", exerciseId),
   );
 
@@ -267,7 +267,7 @@ export async function getRecentPRs(
   limitCount: number = 10
 ): Promise<PRWithExerciseInfo[]> {
   const prsPath = getPRsPath(userId);
-  const q = query(collection(firestore, prsPath), orderBy("date", "desc"), limit(limitCount));
+  const q = query(collection(getActiveFirestore(), prsPath), orderBy("date", "desc"), limit(limitCount));
 
   return getCollectionData<PRWithExerciseInfo>(
     `prs:${userId}:recent:${limitCount}`,
@@ -290,7 +290,7 @@ export async function getPRsForPeriodization(
 ): Promise<PRWithExerciseInfo[]> {
   const prsPath = getPRsPath(userId);
   const q = query(
-    collection(firestore, prsPath),
+    collection(getActiveFirestore(), prsPath),
     where("periodizationId", "==", periodizationId),
   );
 
