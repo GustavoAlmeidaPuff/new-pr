@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 
 import { getCollectionData, getDocumentData } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 import type { Periodization } from "../features/periodizations/types";
 
 /**
@@ -47,7 +47,7 @@ export type CreatePeriodizationInput = {
 export async function createPeriodization(input: CreatePeriodizationInput): Promise<void> {
   const { userId, name, startDate, durationDays } = input;
   const periodizationsPath = getPeriodizationsPath(userId);
-  const coll = collection(firestore, periodizationsPath);
+  const coll = collection(getActiveFirestore(), periodizationsPath);
   await addDoc(coll, {
     name,
     startDate,
@@ -66,7 +66,7 @@ export async function createPeriodization(input: CreatePeriodizationInput): Prom
  */
 export async function ensureDefaultPeriodizations(userId: string): Promise<void> {
   const periodizationsPath = getPeriodizationsPath(userId);
-  const coll = collection(firestore, periodizationsPath);
+  const coll = collection(getActiveFirestore(), periodizationsPath);
   const snapshot = await getDocs(coll);
   const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as { id: string; status?: string }));
   const existingIds = new Set(list.map((p) => p.id));
@@ -74,13 +74,13 @@ export async function ensureDefaultPeriodizations(userId: string): Promise<void>
   const today = new Date().toISOString().split("T")[0];
 
   let hasWrites = false;
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
 
   for (const id of PERIODIZATION_IDS) {
     if (existingIds.has(id)) continue;
     hasWrites = true;
     const isFirstAndNoActive = id === "base" && !hasActive;
-    const ref = doc(firestore, periodizationsPath, id);
+    const ref = doc(getActiveFirestore(), periodizationsPath, id);
     batch.set(ref, {
       name: PERIODIZATION_NAMES[id],
       startDate: today,
@@ -116,7 +116,7 @@ export async function activatePeriodization(
   userId: string,
   periodizationId: string
 ): Promise<void> {
-  const batch = writeBatch(firestore);
+  const batch = writeBatch(getActiveFirestore());
   const periodizationsPath = getPeriodizationsPath(userId);
 
   // Desativa todas as periodizações ativas do usuário
@@ -124,7 +124,7 @@ export async function activatePeriodization(
     `periodizations:${userId}:active`,
     {
       queryFactory: () =>
-        query(collection(firestore, periodizationsPath), where("status", "==", "active")),
+        query(collection(getActiveFirestore(), periodizationsPath), where("status", "==", "active")),
       map: (docSnap) => ({
         ref: docSnap.ref,
       }),
@@ -140,7 +140,7 @@ export async function activatePeriodization(
   });
 
   // Ativa a periodização selecionada
-  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
+  const periodizationRef = doc(getActiveFirestore(), periodizationsPath, periodizationId);
   batch.update(periodizationRef, {
     status: "active",
     updatedAt: serverTimestamp(),
@@ -157,7 +157,7 @@ export async function getActivePeriodization(
 ): Promise<Periodization | null> {
   const periodizationsPath = getPeriodizationsPath(userId);
   const q = query(
-    collection(firestore, periodizationsPath),
+    collection(getActiveFirestore(), periodizationsPath),
     where("status", "==", "active"),
     limit(1)
   );
@@ -185,8 +185,8 @@ export async function incrementPeriodizationPRs(
   periodizationId: string
 ): Promise<void> {
   const periodizationsPath = getPeriodizationsPath(userId);
-  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
-  const batch = writeBatch(firestore);
+  const periodizationRef = doc(getActiveFirestore(), periodizationsPath, periodizationId);
+  const batch = writeBatch(getActiveFirestore());
 
   const currentPeriodization = await getDocumentData<Periodization | null>(
     `periodizations:${userId}:${periodizationId}`,
@@ -227,8 +227,8 @@ export async function updatePeriodization(
   input: UpdatePeriodizationInput
 ): Promise<void> {
   const periodizationsPath = getPeriodizationsPath(userId);
-  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
-  const batch = writeBatch(firestore);
+  const periodizationRef = doc(getActiveFirestore(), periodizationsPath, periodizationId);
+  const batch = writeBatch(getActiveFirestore());
 
   batch.update(periodizationRef, {
     ...input,
@@ -243,8 +243,8 @@ export async function updatePeriodization(
  */
 export async function deletePeriodization(userId: string, periodizationId: string): Promise<void> {
   const periodizationsPath = getPeriodizationsPath(userId);
-  const periodizationRef = doc(firestore, periodizationsPath, periodizationId);
-  const batch = writeBatch(firestore);
+  const periodizationRef = doc(getActiveFirestore(), periodizationsPath, periodizationId);
+  const batch = writeBatch(getActiveFirestore());
   batch.delete(periodizationRef);
   await batch.commit();
 }
