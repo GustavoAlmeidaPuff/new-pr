@@ -10,7 +10,7 @@ import {
 import type { FirestoreError } from "firebase/firestore";
 
 import { subscribeToCollection } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 type UseFirestoreCollectionOptions<T> = {
   path: string;
@@ -78,7 +78,7 @@ export function useFirestoreCollection<T>({
     });
     setLoading(true);
 
-    const baseRef = collection(firestore, path);
+    const baseRef = collection(getActiveFirestore(), path);
 
     const queryConstraints: QueryConstraint[] = [
       orderBy(orderByField, orderByDirection),
