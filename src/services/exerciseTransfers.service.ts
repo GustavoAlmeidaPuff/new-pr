@@ -12,7 +12,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 import { importExercises, listAllExercises } from "./exercises.service";
 
 const TRANSFERS_COLLECTION = "exerciseTransfers";
@@ -73,7 +73,7 @@ export async function createExerciseTransfer(params: {
     throw new Error("Você ainda não tem exercícios cadastrados para compartilhar.");
   }
 
-  const ref = await addDoc(collection(firestore, TRANSFERS_COLLECTION), {
+  const ref = await addDoc(collection(getActiveFirestore(), TRANSFERS_COLLECTION), {
     fromUid: params.fromUid,
     fromEmail: params.fromEmail,
     fromName: params.fromName,
@@ -94,7 +94,7 @@ export async function listIncomingExerciseTransfers(email: string): Promise<Exer
   if (!normalized) return [];
 
   const q = query(
-    collection(firestore, TRANSFERS_COLLECTION),
+    collection(getActiveFirestore(), TRANSFERS_COLLECTION),
     where("toEmail", "==", normalized),
     where("status", "==", "pending"),
     orderBy("createdAt", "desc")
@@ -121,7 +121,7 @@ export async function listIncomingExerciseTransfers(email: string): Promise<Exer
  */
 export async function listOutgoingExerciseTransfers(uid: string): Promise<ExerciseTransfer[]> {
   const q = query(
-    collection(firestore, TRANSFERS_COLLECTION),
+    collection(getActiveFirestore(), TRANSFERS_COLLECTION),
     where("fromUid", "==", uid),
     orderBy("createdAt", "desc")
   );
@@ -148,7 +148,7 @@ export async function acceptExerciseTransfer(
   transferId: string,
   recipientUid: string
 ): Promise<{ imported: number; skipped: number }> {
-  const ref = doc(firestore, TRANSFERS_COLLECTION, transferId);
+  const ref = doc(getActiveFirestore(), TRANSFERS_COLLECTION, transferId);
   const snap = await getDoc(ref);
   if (!snap.exists()) {
     throw new Error("Transferência não encontrada.");
@@ -173,7 +173,7 @@ export async function acceptExerciseTransfer(
  * Recusa uma transferência pendente.
  */
 export async function declineExerciseTransfer(transferId: string): Promise<void> {
-  const ref = doc(firestore, TRANSFERS_COLLECTION, transferId);
+  const ref = doc(getActiveFirestore(), TRANSFERS_COLLECTION, transferId);
   await updateDoc(ref, {
     status: "declined",
     declinedAt: serverTimestamp(),
@@ -184,6 +184,6 @@ export async function declineExerciseTransfer(transferId: string): Promise<void>
  * Remove uma transferência (apenas o remetente pode cancelar antes do aceite).
  */
 export async function deleteExerciseTransfer(transferId: string): Promise<void> {
-  const ref = doc(firestore, TRANSFERS_COLLECTION, transferId);
+  const ref = doc(getActiveFirestore(), TRANSFERS_COLLECTION, transferId);
   await deleteDoc(ref);
 }
