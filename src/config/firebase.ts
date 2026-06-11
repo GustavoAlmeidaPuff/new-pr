@@ -32,7 +32,12 @@ for (const authInstance of [primaryAuth, secondaryAuth]) {
   });
 }
 
+// Cada Firebase App tem seu próprio Auth — e o Firestore precisa ser criado a partir do app
+// correspondente pra que o token de autenticação certo seja enviado em cada request.
+// Caso contrário, o usuário logado no slot secundário não é reconhecido pelo Firestore.
 const firestore = getFirestore(app);
+const secondaryFirestore = getFirestore(secondaryApp);
+
 // Especifica a região das Functions (us-central1 é o padrão)
 const functions = getFunctions(app, "us-central1");
 const googleProvider = new GoogleAuthProvider();
@@ -42,4 +47,31 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true
   connectFunctionsEmulator(functions, "localhost", 5001);
 }
 
-export { app, secondaryApp, primaryAuth, secondaryAuth, firestore, functions, googleProvider };
+const ACTIVE_SLOT_KEY = "newpr:active-account-slot";
+
+export type FirestoreSlot = 0 | 1;
+
+export function getFirestoreForSlot(slot: FirestoreSlot) {
+  return slot === 0 ? firestore : secondaryFirestore;
+}
+
+/**
+ * Retorna o Firestore amarrado ao slot ativo (lido do localStorage).
+ * Use isso em vez de importar `firestore` direto, para que o token do usuário ativo
+ * seja enviado ao Firestore.
+ */
+export function getActiveFirestore() {
+  if (typeof window === "undefined") return firestore;
+  return localStorage.getItem(ACTIVE_SLOT_KEY) === "1" ? secondaryFirestore : firestore;
+}
+
+export {
+  app,
+  secondaryApp,
+  primaryAuth,
+  secondaryAuth,
+  firestore,
+  secondaryFirestore,
+  functions,
+  googleProvider,
+};
