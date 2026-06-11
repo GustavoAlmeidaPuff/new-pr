@@ -9,7 +9,7 @@ import type {
 } from "firebase/firestore";
 
 import { getDocumentData, subscribeToDocument } from "../cache/firestoreCache";
-import { firestore } from "../config/firebase";
+import { getActiveFirestore } from "../config/firebase";
 
 type UseFirestoreDocumentOptions<T> = {
   path: string;
@@ -29,7 +29,7 @@ export function useFirestoreDocument<T>({
   const [error, setError] = useState<FirestoreError | null>(null);
 
   const referenceFactory = useMemo(
-    () => () => doc(firestore, path) as DocumentReference<DocumentData>,
+    () => () => doc(getActiveFirestore(), path) as DocumentReference<DocumentData>,
     [path],
   );
 
